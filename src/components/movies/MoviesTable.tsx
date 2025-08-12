@@ -77,7 +77,6 @@ export const MoviesTable = () => {
           <table className="w-full">
             <thead>
               <tr className="border-b border-border/50">
-                <th className="text-left p-4 text-muted-foreground font-medium"><input type="checkbox" className="w-4 h-4 rounded border-border bg-secondary" /></th>
                 <th className="text-left p-4 text-muted-foreground font-medium">Title ↕</th>
                 <th className="text-left p-4 text-muted-foreground font-medium">Duration</th>
                 <th className="text-left p-4 text-muted-foreground font-medium">Release Date</th>
@@ -90,7 +89,6 @@ export const MoviesTable = () => {
             <tbody>
               {filteredMovies.map((movie) => (
                 <tr key={movie.id} className="border-b border-border/30 hover:bg-secondary/30 transition-colors">
-                  <td className="p-4"><input type="checkbox" className="w-4 h-4 rounded border-border bg-secondary" /></td>
                   <td className="p-4">
                     <div className="flex items-center space-x-3">
                       <div className="w-12 h-12 bg-secondary rounded-lg flex items-center justify-center text-2xl">{movie.poster}</div>

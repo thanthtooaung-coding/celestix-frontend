@@ -70,10 +70,7 @@ export const FoodTable = () => {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-border/50">
-                <th className="text-left p-4 text-muted-foreground font-medium">
-                  <input type="checkbox" className="w-4 h-4 rounded border-border bg-secondary" />
-                </th>
+              <tr className="border-b border-border/50">                
                 <th className="text-left p-4 text-muted-foreground font-medium">Name ↕</th>
                 <th className="text-left p-4 text-muted-foreground font-medium">Price</th>
                 <th className="text-left p-4 text-muted-foreground font-medium">Category</th>
@@ -83,10 +80,7 @@ export const FoodTable = () => {
             </thead>
             <tbody>
               {filteredFood.map((item) => (
-                <tr key={item.id} className="border-b border-border/30 hover:bg-secondary/30 transition-colors">
-                  <td className="p-4">
-                    <input type="checkbox" className="w-4 h-4 rounded border-border bg-secondary" />
-                  </td>
+                <tr key={item.id} className="border-b border-border/30 hover:bg-secondary/30 transition-colors">                  
                   <td className="p-4">
                     <div className="flex items-center space-x-3">
                       <div className="w-12 h-12 bg-secondary rounded-lg flex items-center justify-center text-2xl">

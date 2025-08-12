@@ -66,7 +66,6 @@ export const BookingsTable = () => {
           <table className="w-full">
             <thead>
               <tr className="border-b border-border/50">
-                <th className="text-left p-4 text-muted-foreground font-medium"><input type="checkbox" className="w-4 h-4 rounded border-border bg-secondary" /></th>
                 <th className="text-left p-4 text-muted-foreground font-medium">Booking ID ↕</th>
                 <th className="text-left p-4 text-muted-foreground font-medium">Customer</th>
                 <th className="text-left p-4 text-muted-foreground font-medium">Movie</th>
@@ -81,7 +80,6 @@ export const BookingsTable = () => {
             <tbody>
               {filteredBookings.map((b) => (
                 <tr key={b.id} className="border-b border-border/30 hover:bg-secondary/30 transition-colors">
-                  <td className="p-4"><input type="checkbox" className="w-4 h-4 rounded border-border bg-secondary" /></td>
                   <td className="p-4 font-medium text-foreground">{b.bookingId}</td>
                   <td className="p-4">
                     <div>

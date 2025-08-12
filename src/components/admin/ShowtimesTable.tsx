@@ -84,9 +84,6 @@ export const ShowtimesTable = () => {
           <table className="w-full">
             <thead>
               <tr className="border-b border-border/50">
-                <th className="text-left p-4 text-muted-foreground font-medium">
-                  <input type="checkbox" className="w-4 h-4 rounded border-border bg-secondary" />
-                </th>
                 <th className="text-left p-4 text-muted-foreground font-medium">Movie ↕</th>
                 <th className="text-left p-4 text-muted-foreground font-medium">Theater</th>
                 <th className="text-left p-4 text-muted-foreground font-medium">Date</th>
@@ -100,9 +97,6 @@ export const ShowtimesTable = () => {
             <tbody>
               {filteredShowtimes.map((showtime) => (
                 <tr key={showtime.id} className="border-b border-border/30 hover:bg-secondary/30 transition-colors">
-                  <td className="p-4">
-                    <input type="checkbox" className="w-4 h-4 rounded border-border bg-secondary" />
-                  </td>
                   <td className="p-4 font-medium text-foreground">{showtime.movie}</td>
                   <td className="p-4 text-muted-foreground">{showtime.theater}</td>
                   <td className="p-4 text-muted-foreground">{showtime.date}</td>

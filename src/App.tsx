@@ -16,6 +16,8 @@ import { EditFoodPage } from "./pages/EditFoodPage";
 import { EditShowtimePage } from "./pages/EditShowtimePage";
 import { AddAdminPage } from "./pages/AddAdminPage";
 import { EditProfilePage } from "./pages/EditProfilePage";
+import { AddFoodCategoryPage } from "./pages/AddFoodCategoryPage";
+import { AddMovieGenrePage } from "./pages/AddMovieGenrePage";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +32,8 @@ const App = () => (
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/add-movie" element={<AddMoviePage />} />
           <Route path="/add-food" element={<AddFoodPage />} />
+          <Route path="/add-food-category" element={<AddFoodCategoryPage />} />
+          <Route path="/add-movie-genre" element={<AddMovieGenrePage />} />
           <Route path="/add-showtime" element={<AddShowtimePage />} />
           <Route
             path="/admin/theater/:theaterId/pricing"

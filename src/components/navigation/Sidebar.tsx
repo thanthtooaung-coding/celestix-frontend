@@ -7,7 +7,9 @@ import {
   Newspaper,
   Calendar,
   User,
-  Building
+  Building,
+  ClipboardList,
+  Tag
 } from "lucide-react";
 
 interface SidebarProps {
@@ -18,7 +20,9 @@ interface SidebarProps {
 const menuItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "movies", label: "Movies", icon: Film },
+  { id: "movie-genre", label: "Movie Genre", icon: Tag },
   { id: "food", label: "Food", icon: Users },
+  { id: "food-category", label: "Food Category", icon: ClipboardList },
   { id: "showtimes", label: "Showtimes", icon: Calendar },
   { id: "theaters", label: "Theaters", icon: Building },
   { id: "bookings", label: "Bookings", icon: Newspaper },

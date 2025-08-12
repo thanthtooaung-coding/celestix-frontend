@@ -102,14 +102,7 @@ export const MovieDetailsPage = ({ movieId, onPageChange }: MovieDetailsPageProp
                   onClick={() => setIsLiked(!isLiked)}
                 >
                   <Heart className={`w-5 h-5 ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  className="text-white hover:bg-white/10"
-                >
-                  <Share2 className="w-5 h-5" />
-                </Button>
+                </Button>                
               </div>
             </div>
 
