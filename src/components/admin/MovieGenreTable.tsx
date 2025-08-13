@@ -1,30 +1,35 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Plus, Edit, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-const initialGenres = [
-    { id: 1, name: "Action", description: "High-energy films with a focus on stunts, fights, and chases." },
-    { id: 2, name: "Comedy", description: "Light-hearted films designed to make the audience laugh." },
-    { id: 3, name: "Drama", description: "Serious, character-driven films with a focus on realistic storytelling." },
-    { id: 4, name: "Horror", description: "Films designed to frighten and scare the audience." },
-    { id: 5, name: "Sci-Fi", description: "Films featuring futuristic technology, space travel, and speculative themes." },
-    { id: 6, name: "Thriller", description: "Suspenseful films that keep the audience on the edge of their seat." },
-    { id: 7, name: "Romance", description: "Films centered around a love story." },
-    { id: 8, name: "Animation", description: "Films created using animation techniques." }
-];
-
 export const MovieGenreTable = () => {
     const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [genres, setGenres] = useState(initialGenres);
+  const [genres, setGenres] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredGenres = genres.filter(genre =>
+  useEffect(() => {
+    fetch("http://47.130.149.164:8081/api/v1/movie-genres")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch genres");
+        return res.json();
+      })
+      .then((data) => {
+        setGenres(data);
+      })
+      .catch((err) => {
+        console.error("Error fetching genres:", err);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filteredGenres = genres.filter((genre) =>
     genre.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
+  
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

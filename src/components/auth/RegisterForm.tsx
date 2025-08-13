@@ -20,10 +20,86 @@ export const RegisterForm = ({ onSwitchToLogin, onSuccess }: RegisterFormProps) 
     password: "",
     confirmPassword: ""
   });
+  const [errors, setErrors] = useState({
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: ""
+  });
+
+  const validate = () => {
+    const newErrors = { username: "", email: "", password: "", confirmPassword: "" };
+    let isValid = true;
+
+    if (!formData.username) {
+      newErrors.username = "Username is required";
+      isValid = false;
+    }
+
+    if (!formData.email) {
+      newErrors.email = "Email is required";
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Email is invalid";
+      isValid = false;
+    }
+
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+      isValid = false;
+    } else if (formData.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters";
+      isValid = false;
+    }
+
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = "Confirm Password is required";
+      isValid = false;
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    if (errors[field as keyof typeof errors]) {
+      setErrors(prev => ({ ...prev, [field]: "" }));
+    }
   };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+
+    try {
+      const response = await fetch("http://47.130.149.164:8081/api/v1/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.username,
+          email: formData.email,
+          password: formData.password,
+          role: "CUSTOMER"
+        }),
+      });
+
+      if (response.ok) {
+        onSuccess?.();
+      } else {
+        const errorData = await response.json();
+        setErrors({ ...errors, email: errorData.message || "Failed to register" });
+      }
+    } catch (error) {
+      setErrors({ ...errors, email: "An error occurred. Please try again." });
+    }
+  };
+
 
   return (
     <div className="min-h-screen relative overflow-hidden floating-elements">
@@ -41,7 +117,7 @@ export const RegisterForm = ({ onSwitchToLogin, onSuccess }: RegisterFormProps) 
             </div>
 
             {/* Form */}
-            <form className="space-y-6">
+            <form className="space-y-6" onSubmit={handleSubmit}>
               <div className="space-y-2 text-left">
                 <Label htmlFor="username" className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                   USER NAME <span className="text-destructive">*</span>
@@ -53,6 +129,7 @@ export const RegisterForm = ({ onSwitchToLogin, onSuccess }: RegisterFormProps) 
                   onChange={(e) => handleChange("username", e.target.value)}
                   className="bg-secondary/50 border-border/50 text-foreground placeholder:text-muted-foreground"
                 />
+                {errors.username && <p className="text-destructive text-xs">{errors.username}</p>}
               </div>
 
               <div className="space-y-2 text-left">
@@ -66,6 +143,7 @@ export const RegisterForm = ({ onSwitchToLogin, onSuccess }: RegisterFormProps) 
                   onChange={(e) => handleChange("email", e.target.value)}
                   className="bg-secondary/50 border-border/50 text-foreground placeholder:text-muted-foreground"
                 />
+                {errors.email && <p className="text-destructive text-xs">{errors.email}</p>}
               </div>
 
               <div className="space-y-2 text-left">
@@ -90,6 +168,7 @@ export const RegisterForm = ({ onSwitchToLogin, onSuccess }: RegisterFormProps) 
                     {showPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
                   </Button>
                 </div>
+                {errors.password && <p className="text-destructive text-xs">{errors.password}</p>}
               </div>
 
               <div className="space-y-2 text-left">
@@ -114,6 +193,7 @@ export const RegisterForm = ({ onSwitchToLogin, onSuccess }: RegisterFormProps) 
                     {showConfirmPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
                   </Button>
                 </div>
+                {errors.confirmPassword && <p className="text-destructive text-xs">{errors.confirmPassword}</p>}
               </div>
 
               <div className="flex items-center space-x-2">
@@ -138,6 +218,7 @@ export const RegisterForm = ({ onSwitchToLogin, onSuccess }: RegisterFormProps) 
             <p className="text-muted-foreground text-sm">
               Already have an account?{" "}
               <button 
+                type="button"
                 onClick={onSwitchToLogin}
                 className="text-primary hover:text-primary/80 transition-colors underline"
               >

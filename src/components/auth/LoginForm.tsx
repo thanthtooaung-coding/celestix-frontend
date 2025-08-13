@@ -16,6 +16,72 @@ export const LoginForm = ({ onSwitchToRegister, onForgotPassword, onLogin, onClo
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("administrator@gmail.com");
   const [password, setPassword] = useState("••••••••");
+  const [errors, setErrors] = useState({
+    email: "",
+    password: "",
+  });
+
+  const validate = () => {
+    const newErrors = { email: "", password: "" };
+    let isValid = true;
+
+    if (!email) {
+      newErrors.email = "Email is required";
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "Email is invalid";
+      isValid = false;
+    }
+
+    if (!password) {
+      newErrors.password = "Password is required";
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+    if (errors.email) {
+      setErrors({ ...errors, email: "" });
+    }
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+    if (errors.password) {
+      setErrors({ ...errors, password: "" });
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+
+    try {
+      const response = await fetch("http://47.130.149.164:8081/api/v1/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem("token", data.data.token);
+        onLogin?.();
+      } else {
+        const errorData = await response.json();
+        setErrors({ ...errors, password: errorData.message || "Failed to login" });
+      }
+    } catch (error) {
+      setErrors({ ...errors, password: "An error occurred. Please try again." });
+    }
+  };
+
 
   return (
     <div className="min-h-screen relative overflow-hidden floating-elements">
@@ -41,7 +107,7 @@ export const LoginForm = ({ onSwitchToRegister, onForgotPassword, onLogin, onClo
             </div>
 
             {/* Form */}
-            <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); onLogin?.(); }}>
+            <form className="space-y-6" onSubmit={handleSubmit}>
               <div className="space-y-2 text-left">
                 <Label htmlFor="email" className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                   EMAIL <span className="text-destructive">*</span>
@@ -50,9 +116,10 @@ export const LoginForm = ({ onSwitchToRegister, onForgotPassword, onLogin, onClo
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={handleEmailChange}
                   className="bg-secondary/50 border-border/50 text-foreground placeholder:text-muted-foreground"
                 />
+                {errors.email && <p className="text-destructive text-xs">{errors.email}</p>}
               </div>
 
               <div className="space-y-2 text-left">
@@ -64,7 +131,7 @@ export const LoginForm = ({ onSwitchToRegister, onForgotPassword, onLogin, onClo
                     id="password"
                     type={showPassword ? "text" : "password"}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={handlePasswordChange}
                     className="bg-secondary/50 border-border/50 text-foreground placeholder:text-muted-foreground pr-10"
                   />
                   <Button
@@ -77,6 +144,7 @@ export const LoginForm = ({ onSwitchToRegister, onForgotPassword, onLogin, onClo
                     {showPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
                   </Button>
                 </div>
+                {errors.password && <p className="text-destructive text-xs">{errors.password}</p>}
               </div>
 
               <div className="flex items-center justify-between text-sm">
@@ -85,6 +153,7 @@ export const LoginForm = ({ onSwitchToRegister, onForgotPassword, onLogin, onClo
                   <span className="text-muted-foreground">Remember Password</span>
                 </label>
                 <button 
+                  type="button"
                   onClick={onForgotPassword}
                   className="text-primary hover:text-primary/80 transition-colors"
                 >
@@ -104,32 +173,13 @@ export const LoginForm = ({ onSwitchToRegister, onForgotPassword, onLogin, onClo
             <p className="text-muted-foreground text-sm">
               Don't have an account?{" "}
               <button 
+                type="button"
                 onClick={onSwitchToRegister}
                 className="text-primary hover:text-primary/80 transition-colors underline"
               >
                 Sign up now
               </button>
             </p>
-
-            {/* Divider */}
-            <div className="flex items-center space-x-4 my-6">
-              <div className="flex-1 h-px bg-border"></div>
-              <span className="text-muted-foreground text-sm">OR</span>
-              <div className="flex-1 h-px bg-border"></div>
-            </div>
-
-            {/* Social Login */}
-            <div className="flex justify-center space-x-4">
-              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full bg-secondary/50 hover:bg-secondary">
-                <span className="text-blue-400 text-lg">f</span>
-              </Button>
-              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full bg-secondary/50 hover:bg-secondary">
-                <span className="text-blue-400 text-lg">t</span>
-              </Button>
-              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full bg-secondary/50 hover:bg-secondary">
-                <span className="text-red-400 text-lg">G</span>
-              </Button>
-            </div>
           </div>
         </Card>
       </div>
