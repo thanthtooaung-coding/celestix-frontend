@@ -8,7 +8,7 @@ import { EyeIcon, EyeOffIcon } from "lucide-react";
 interface LoginFormProps {
   onSwitchToRegister?: () => void;
   onForgotPassword?: () => void;
-  onLogin?: () => void;
+  onLogin?: (role: string) => void;
   onClose?: () => void;
 }
 
@@ -72,7 +72,9 @@ export const LoginForm = ({ onSwitchToRegister, onForgotPassword, onLogin, onClo
       if (response.ok) {
         const data = await response.json();
         localStorage.setItem("token", data.data.token);
-        onLogin?.();
+        if (onLogin) {
+          onLogin(data.data.role); 
+        }
       } else {
         const errorData = await response.json();
         setErrors({ ...errors, password: errorData.message || "Failed to login" });

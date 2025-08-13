@@ -16,6 +16,7 @@ import { EditProfilePage } from "@/pages/EditProfilePage";
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState("home");
   const [authMode, setAuthMode] = useState<"login" | "register" | "forgot">("login");
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -40,10 +41,17 @@ const Index = () => {
     if (movieId) setSelectedMovieId(movieId);
   };
 
-  const handleAuthSuccess = () => {
+  const handleAuthSuccess = (role: string) => {
     setIsAuthenticated(true);
+    setUserRole(role);
     setShowAuthModal(false);
-    // if they were trying to go to booking/food, render it now
+    if (role === 'ADMIN') {
+      setCurrentPage('admin');
+    } else {
+      if (currentPage === 'login' || currentPage === 'register' || currentPage === 'forgot') {
+        setCurrentPage('home');
+      }
+    }
   };
 
   if (showAuthModal && !isAuthenticated) {
@@ -51,7 +59,7 @@ const Index = () => {
       return (
         <RegisterForm
           onSwitchToLogin={() => setAuthMode("login")}
-          onSuccess={handleAuthSuccess}
+          onSuccess={() => handleAuthSuccess("CUSTOMER")}
         />
       );
     }
@@ -121,8 +129,12 @@ const Index = () => {
       <Header
         currentPage={currentPage}
         onPageChange={handlePageChange}
-        onAuthClick={() => setIsAuthenticated(false)}
+        onAuthClick={() => {
+          setIsAuthenticated(false);
+          setUserRole(null);
+        }}
         isAuthenticated={isAuthenticated}
+        userRole={userRole}
       />
       {renderPage()}
     </div>

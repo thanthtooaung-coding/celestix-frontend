@@ -15,9 +15,10 @@ interface HeaderProps {
   onPageChange: (page: string, movieId?: string) => void;
   onAuthClick: () => void;
   isAuthenticated?: boolean;
+  userRole?: string | null;
 }
 
-export const Header = ({ currentPage, onPageChange, onAuthClick, isAuthenticated }: HeaderProps) => {
+export const Header = ({ currentPage, onPageChange, onAuthClick, isAuthenticated, userRole }: HeaderProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [notifications] = useState([
     { id: 1, message: "New movie 'Dune 2' now available!", read: false },
@@ -32,7 +33,7 @@ export const Header = ({ currentPage, onPageChange, onAuthClick, isAuthenticated
     { id: "discover", label: "DISCOVER" },
     { id: "profile", label: "PROFILE", requiresAuth: true },
     { id: "food", label: "FOOD", requiresAuth: true },
-    ...(isAuthenticated ? [{ id: "admin", label: "ADMIN" }] : [])
+    ...(isAuthenticated && userRole === 'ADMIN' ? [{ id: "admin", label: "ADMIN" }] : [])
   ];
 
   return (
@@ -50,19 +51,24 @@ export const Header = ({ currentPage, onPageChange, onAuthClick, isAuthenticated
 
         {/* Navigation */}
         <nav className="hidden md:flex items-center space-x-8">
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => onPageChange(item.id)}
-              className={`text-sm font-medium transition-colors ${
-                currentPage === item.id
-                  ? "text-primary border-b-2 border-primary pb-4"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
+          {navItems.map((item) => {
+            if (item.requiresAuth && !isAuthenticated) {
+              return null;
+            }
+            return (
+              <button
+                key={item.id}
+                onClick={() => onPageChange(item.id)}
+                className={`text-sm font-medium transition-colors ${
+                  currentPage === item.id
+                    ? "text-primary border-b-2 border-primary pb-4"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {item.label}
+              </button>
+            )
+          })}
         </nav>
 
         {/* User Actions */}

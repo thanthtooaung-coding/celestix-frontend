@@ -224,27 +224,7 @@ export const RegisterForm = ({ onSwitchToLogin, onSuccess }: RegisterFormProps) 
               >
                 Login now
               </button>
-            </p>
-
-            {/* Divider */}
-            <div className="flex items-center space-x-4 my-6">
-              <div className="flex-1 h-px bg-border"></div>
-              <span className="text-muted-foreground text-sm">OR</span>
-              <div className="flex-1 h-px bg-border"></div>
-            </div>
-
-            {/* Social Login */}
-            <div className="flex justify-center space-x-4">
-              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full bg-secondary/50 hover:bg-secondary">
-                <span className="text-blue-400 text-lg">f</span>
-              </Button>
-              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full bg-secondary/50 hover:bg-secondary">
-                <span className="text-blue-400 text-lg">t</span>
-              </Button>
-              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full bg-secondary/50 hover:bg-secondary">
-                <span className="text-red-400 text-lg">G</span>
-              </Button>
-            </div>
+            </p>            
           </div>
         </Card>
       </div>
