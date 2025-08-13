@@ -413,7 +413,6 @@ export const TheatersTable = () => {
               <TableHead className="text-foreground">Configuration</TableHead>
               <TableHead className="text-foreground">Seat Pricing</TableHead>
               <TableHead className="text-foreground">Capacity</TableHead>
-              <TableHead className="text-foreground">Facilities</TableHead>
               <TableHead className="text-foreground">Status</TableHead>
               <TableHead className="text-foreground">Actions</TableHead>
             </TableRow>
@@ -433,15 +432,6 @@ export const TheatersTable = () => {
                   </div>
                 </TableCell>
                 <TableCell className="text-muted-foreground">{theater.capacity}</TableCell>
-                <TableCell>
-                  <div className="flex flex-wrap gap-1">
-                    {theater.facilities.map((facility) => (
-                      <Badge key={facility} variant="secondary" className="text-xs">
-                        {facility}
-                      </Badge>
-                    ))}
-                  </div>
-                </TableCell>
                 <TableCell>
                   <Badge 
                     variant={theater.status === "Active" ? "default" : theater.status === "Maintenance" ? "secondary" : "destructive"}

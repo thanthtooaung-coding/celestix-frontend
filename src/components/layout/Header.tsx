@@ -13,12 +13,14 @@ import {
 interface HeaderProps {
   currentPage: string;
   onPageChange: (page: string, movieId?: string) => void;
-  onAuthClick: () => void;
+  onLogout: () => void;
+  onLoginClick: () => void;
+  onRegisterClick: () => void;
   isAuthenticated?: boolean;
   userRole?: string | null;
 }
 
-export const Header = ({ currentPage, onPageChange, onAuthClick, isAuthenticated, userRole }: HeaderProps) => {
+export const Header = ({ currentPage, onPageChange, onLogout, onLoginClick, onRegisterClick, isAuthenticated, userRole }: HeaderProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [notifications] = useState([
     { id: 1, message: "New movie 'Dune 2' now available!", read: false },
@@ -73,15 +75,21 @@ export const Header = ({ currentPage, onPageChange, onAuthClick, isAuthenticated
 
         {/* User Actions */}
         <div className="flex items-center space-x-4">
-          
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onAuthClick}
-            className="w-8 h-8 rounded-full bg-gradient-accent"
-          >
-            <User className="w-4 h-4 text-background" />
-          </Button>
+          {isAuthenticated ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onLogout}
+              className="w-8 h-8 rounded-full bg-gradient-accent"
+            >
+              <User className="w-4 h-4 text-background" />
+            </Button>
+          ) : (
+            <div className="hidden md:flex items-center space-x-2">
+              <Button variant="outline" onClick={onLoginClick}>Login</Button>
+              <Button onClick={onRegisterClick}>Register</Button>
+            </div>
+          )}
 
           {/* Mobile Menu */}
           <Button variant="ghost" size="icon" className="md:hidden">

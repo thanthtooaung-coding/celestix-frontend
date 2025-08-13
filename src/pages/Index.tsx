@@ -54,6 +54,22 @@ const Index = () => {
     }
   };
 
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setUserRole(null);
+    setCurrentPage('home');
+  };
+
+  const handleLoginClick = () => {
+    setAuthMode("login");
+    setShowAuthModal(true);
+  };
+
+  const handleRegisterClick = () => {
+    setAuthMode("register");
+    setShowAuthModal(true);
+  };
+
   if (showAuthModal && !isAuthenticated) {
     if (authMode === "register") {
       return (
@@ -126,16 +142,17 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-cinema">
-      <Header
-        currentPage={currentPage}
-        onPageChange={handlePageChange}
-        onAuthClick={() => {
-          setIsAuthenticated(false);
-          setUserRole(null);
-        }}
-        isAuthenticated={isAuthenticated}
-        userRole={userRole}
-      />
+      {currentPage !== 'admin' && (
+        <Header
+          currentPage={currentPage}
+          onPageChange={handlePageChange}
+          onLogout={handleLogout}
+          onLoginClick={handleLoginClick}
+          onRegisterClick={handleRegisterClick}
+          isAuthenticated={isAuthenticated}
+          userRole={userRole}
+        />
+      )}
       {renderPage()}
     </div>
   );

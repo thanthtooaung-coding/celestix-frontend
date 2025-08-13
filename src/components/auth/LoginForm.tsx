@@ -14,8 +14,8 @@ interface LoginFormProps {
 
 export const LoginForm = ({ onSwitchToRegister, onForgotPassword, onLogin, onClose }: LoginFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("administrator@gmail.com");
-  const [password, setPassword] = useState("••••••••");
+  const [email, setEmail] = useState("admin@celestix.com");
+  const [password, setPassword] = useState("admin123");
   const [errors, setErrors] = useState({
     email: "",
     password: "",
