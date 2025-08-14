@@ -33,7 +33,7 @@ export const HomePage = ({ onPageChange, isAuthenticated }: HomePageProps) => {
     {
       id: "1",
       title: "Spider-Man: No Way Home",
-      image: "/lovable-uploads/spiderman.jpg",
+      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFbyCAAY8Hw6RFlIi1RYPTZdvvQuA_SB1u_ZPj7VJQFNHwrrvZiAp1LetLgsWXkPb-HaCcWU6NUtscgzjGDrse4A",
       duration: "148 min",
       rating: 8.4,
       genre: "Action",

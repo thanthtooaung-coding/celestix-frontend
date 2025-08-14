@@ -25,7 +25,7 @@ export const DiscoverPage = ({ onPageChange, isAuthenticated }: DiscoverPageProp
     {
       id: "1",
       title: "The Green Knight",
-      image: "/lovable-uploads/green-knight.jpg",
+      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFbyCAAY8Hw6RFlIi1RYPTZdvvQuA_SB1u_ZPj7VJQFNHwrrvZiAp1LetLgsWXkPb-HaCcWU6NUtscgzjGDrse4A",
       duration: "127 minutes",
       rating: 7.2,
       genre: "Fantasy",

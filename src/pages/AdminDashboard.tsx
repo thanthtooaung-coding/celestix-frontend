@@ -12,9 +12,17 @@ import { Bell, Search, Plus } from "lucide-react";
 import { FoodCategoryTable } from "@/components/admin/FoodCategoryTable";
 import { MovieGenreTable } from "@/components/admin/MovieGenreTable";
 
-export const AdminDashboard = () => {
+export const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState("dashboard");
+
+  const handlePageChange = (page: string) => {
+    if (page === "logout") {
+      onLogout();
+    } else {
+      setCurrentPage(page);
+    }
+  };
 
   const renderContent = () => {
     switch (currentPage) {
@@ -55,7 +63,7 @@ export const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-primary">
       <div className="flex">
-        <Sidebar currentPage={currentPage} onPageChange={setCurrentPage} />
+        <Sidebar currentPage={currentPage} onPageChange={handlePageChange} />
         
         <div className="flex-1 flex flex-col">
           {/* Top Bar */}

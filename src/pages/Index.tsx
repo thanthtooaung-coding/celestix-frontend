@@ -58,6 +58,8 @@ const Index = () => {
     setIsAuthenticated(false);
     setUserRole(null);
     setCurrentPage('home');
+    setAuthMode("login");
+    setShowAuthModal(true);
   };
 
   const handleLoginClick = () => {
@@ -129,7 +131,7 @@ const Index = () => {
       case "food":
         return <FoodComboPage />;
       case "admin":
-        return <AdminDashboard />;
+        return <AdminDashboard onLogout={handleLogout} />;
       default:
         return (
           <HomePage

@@ -9,7 +9,8 @@ import {
   User,
   Building,
   ClipboardList,
-  Tag
+  Tag,
+  LogOut,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -28,9 +29,11 @@ const menuItems = [
   { id: "bookings", label: "Bookings", icon: Newspaper },
 ];
 
+const bottomMenuItems = [{ id: "logout", label: "Logout", icon: LogOut }];
+
 export const Sidebar = ({ currentPage, onPageChange }: SidebarProps) => {
   return (
-    <div className="w-64 h-screen bg-secondary/30 glass-card border-r border-border/50">
+    <div className="w-64 h-screen bg-secondary/30 glass-card border-r border-border/50 flex flex-col">
       {/* Logo */}
       <div className="p-6 border-b border-border/50">
         <div className="flex items-center space-x-3">
@@ -57,7 +60,7 @@ export const Sidebar = ({ currentPage, onPageChange }: SidebarProps) => {
       </div>
 
       {/* Navigation */}
-      <nav className="p-4 space-y-2">
+      <nav className="p-4 space-y-2 flex-1">
         {menuItems.map((item) => (
           <Button
             key={item.id}
@@ -67,6 +70,24 @@ export const Sidebar = ({ currentPage, onPageChange }: SidebarProps) => {
               currentPage === item.id 
                 ? "bg-gradient-accent text-background shadow-glow" 
                 : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+            )}
+            onClick={() => onPageChange(item.id)}
+          >
+            <item.icon className="w-5 h-5" />
+            <span>{item.label}</span>
+          </Button>
+        ))}
+      </nav>
+
+      {/* Bottom Navigation */}
+      <nav className="p-4 space-y-2 border-t border-border/50">
+        {bottomMenuItems.map((item) => (
+          <Button
+            key={item.id}
+            variant={"ghost"}
+            className={cn(
+              "w-full justify-start space-x-3 h-12",
+              "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
             )}
             onClick={() => onPageChange(item.id)}
           >
