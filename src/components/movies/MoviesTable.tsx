@@ -112,7 +112,7 @@ export const MoviesTable = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-foreground">Movies</h1>
-        <Button className="bg-gradient-accent hover:shadow-glow transition-all duration-300" onClick={() => navigate("/add-movie")}> <Plus className="w-4 h-4 mr-2" /> New Movie </Button>
+        <Button className="bg-gradient-accent hover:shadow-glow transition-all duration-300" onClick={() => navigate("/admin/movies/add")}> <Plus className="w-4 h-4 mr-2" /> New Movie </Button>
       </div>
 
       <Card className="glass-card p-4">

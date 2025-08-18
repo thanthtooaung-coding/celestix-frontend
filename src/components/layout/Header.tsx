@@ -1,14 +1,7 @@
 import { useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { 
-  Search, 
-  User, 
-  Menu, 
-  Bell,
-  Film
-} from "lucide-react";
+import { User, Menu } from "lucide-react";
 
 interface HeaderProps {
   currentPage: string;
@@ -20,29 +13,22 @@ interface HeaderProps {
   userRole?: string | null;
 }
 
-export const Header = ({ currentPage, onPageChange, onLogout, onLoginClick, onRegisterClick, isAuthenticated, userRole }: HeaderProps) => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [notifications] = useState([
-    { id: 1, message: "New movie 'Dune 2' now available!", read: false },
-    { id: 2, message: "Your booking for 'The Batman' confirmed", read: true },
-    { id: 3, message: "Special discount on food combos!", read: false }
-  ]);
-
-  const unreadCount = notifications.filter(n => !n.read).length;
+export const Header = ({ onLogout, onLoginClick, onRegisterClick, isAuthenticated, userRole }: HeaderProps) => {
+  const navigate = useNavigate();
 
   const navItems = [
-    { id: "home", label: "HOME" },
-    { id: "discover", label: "DISCOVER" },
-    { id: "profile", label: "PROFILE", requiresAuth: true },
-    { id: "food", label: "FOOD", requiresAuth: true },
-    ...(isAuthenticated && userRole === 'ADMIN' ? [{ id: "admin", label: "ADMIN" }] : [])
+    { id: "home", label: "HOME", path: "/" },
+    { id: "discover", label: "DISCOVER", path: "/discover" },
+    { id: "profile", label: "PROFILE", path: "/profile", requiresAuth: true },
+    { id: "food", label: "FOOD", path: "/food", requiresAuth: true },
+    ...(isAuthenticated && userRole === 'ADMIN' ? [{ id: "admin", label: "ADMIN", path: "/admin" }] : [])
   ];
 
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate('/')}>
           <img 
             src="/lovable-uploads/CELESTIX.png" 
             alt="CELESTIX Logo" 
@@ -58,17 +44,19 @@ export const Header = ({ currentPage, onPageChange, onLogout, onLoginClick, onRe
               return null;
             }
             return (
-              <button
-                key={item.id}
-                onClick={() => onPageChange(item.id)}
-                className={`text-sm font-medium transition-colors ${
-                  currentPage === item.id
-                    ? "text-primary border-b-2 border-primary pb-4"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {item.label}
-              </button>
+                <NavLink
+                    key={item.id}
+                    to={item.path}
+                    className={({ isActive }) =>
+                        `text-sm font-medium transition-colors ${
+                        isActive
+                            ? "text-primary border-b-2 border-primary pb-4"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`
+                    }
+                >
+                    {item.label}
+                </NavLink>
             )
           })}
         </nav>

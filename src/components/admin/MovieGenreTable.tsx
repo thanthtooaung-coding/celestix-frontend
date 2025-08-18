@@ -37,7 +37,7 @@ export const MovieGenreTable = () => {
         <h1 className="text-2xl font-bold text-foreground">Movie Genres</h1>
         <Button
             className="bg-gradient-accent hover:shadow-glow"
-            onClick={() => navigate("/add-movie-genre")}
+            onClick={() => navigate("/admin/movie-genres/add")}
         >
           <Plus className="w-4 h-4 mr-2" />
           New Genre

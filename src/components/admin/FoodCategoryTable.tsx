@@ -28,7 +28,7 @@ export const FoodCategoryTable = () => {
         <h1 className="text-2xl font-bold text-foreground">Food Categories</h1>
         <Button
             className="bg-gradient-accent hover:shadow-glow"
-            onClick={() => navigate("/add-food-category")}
+            onClick={() => navigate("/admin/food-categories/add")}
         >
           <Plus className="w-4 h-4 mr-2" />
           New Category
