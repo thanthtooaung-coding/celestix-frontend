@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Plus, Edit, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { fetchWithAuth } from "@/lib/api";
 
 export const MovieGenreTable = () => {
     const navigate = useNavigate();
@@ -12,13 +13,13 @@ export const MovieGenreTable = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://47.130.149.164:8081/api/v1/movie-genres")
+    fetchWithAuth("/movie-genres")
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch genres");
         return res.json();
       })
       .then((data) => {
-        setGenres(data);
+        setGenres(data.data);
       })
       .catch((err) => {
         console.error("Error fetching genres:", err);

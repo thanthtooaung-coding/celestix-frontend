@@ -10,7 +10,7 @@ import {
     CommandList,
 } from "@/components/ui/command";
 
-export const MultiSelect = ({ options, selected, onChange, placeholder }: { options: string[], selected: string[], onChange: (selected: string[]) => void, placeholder?: string }) => {
+export const MultiSelect = ({ options, selected, onChange, placeholder }: { options: { id: number, name: string, description: string }[], selected: string[], onChange: (selected: string[]) => void, placeholder?: string }) => {
     const [open, setOpen] = useState(false);
 
     const handleSelect = (option: string) => {
@@ -22,7 +22,7 @@ export const MultiSelect = ({ options, selected, onChange, placeholder }: { opti
         onChange(selected.filter((s) => s !== option));
     };
 
-    const selectables = options.filter((option) => !selected.includes(option));
+    const selectables = options.filter((option) => !selected.includes(option.name));
 
     return (
         <Command className="overflow-visible bg-transparent">
@@ -59,15 +59,15 @@ export const MultiSelect = ({ options, selected, onChange, placeholder }: { opti
                             <CommandGroup>
                                 {selectables.map((option) => (
                                     <CommandItem
-                                        key={option}
+                                        key={option.id}
                                         onMouseDown={(e) => {
                                             e.preventDefault();
                                             e.stopPropagation();
                                         }}
-                                        onSelect={() => handleSelect(option)}
+                                        onSelect={() => handleSelect(option.name)}
                                         className={"cursor-pointer"}
                                     >
-                                        {option}
+                                        {option.name}
                                     </CommandItem>
                                 ))}
                             </CommandGroup>

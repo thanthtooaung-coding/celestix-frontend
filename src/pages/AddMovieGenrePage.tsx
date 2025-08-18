@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { fetchWithAuth } from "@/lib/api";
 
 export const AddMovieGenrePage = () => {
   const navigate = useNavigate();
@@ -15,13 +16,38 @@ export const AddMovieGenrePage = () => {
     description: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Movie Genre Added",
-      description: "New movie genre has been successfully added.",
-    });
-    navigate(-1);
+    try {
+      const response = await fetchWithAuth("/movie-genres", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(genreData),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Movie Genre Added",
+          description: "New movie genre has been successfully added.",
+        });
+        navigate(-1);
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "Error",
+          description: errorData.message || "Failed to add movie genre.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An error occurred while adding the movie genre.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {

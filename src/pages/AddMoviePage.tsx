@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Upload } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { MultiSelect } from "@/components/ui/MultiSelect";
+import { fetchWithAuth } from "@/lib/api";
 
 export const AddMoviePage = () => {
     const navigate = useNavigate();
@@ -22,18 +23,95 @@ export const AddMoviePage = () => {
         director: "",
         cast: "",
         trailerUrl: "",
-        language: "English",
-        status: "Now Showing"
+        language: "",
+        status: ""
     });
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const [genreOptions, setGenreOptions] = useState<any[]>([]);
+    const [templateData, setTemplateData] = useState<any>({
+        ratingOptions: [],
+        languageOptions: [],
+        statusOptions: []
+    });
+
+    useEffect(() => {
+        const fetchInitialData = async () => {
+            try {
+                const [genresResponse, templateResponse] = await Promise.all([
+                    fetchWithAuth("/movie-genres"),
+                    fetchWithAuth("/movies/template")
+                ]);
+
+                if (genresResponse.ok) {
+                    const genresData = await genresResponse.json();
+                    setGenreOptions(genresData.data);
+                } else {
+                    console.error("Failed to fetch genres");
+                }
+
+                if (templateResponse.ok) {
+                    const templateData = await templateResponse.json();
+                    setTemplateData(templateData.data);
+                } else {
+                    console.error("Failed to fetch movie template");
+                }
+            } catch (error) {
+                console.error("Error fetching initial data:", error);
+            }
+        };
+
+        fetchInitialData();
+    }, []);
+
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log("Movie Data:", movieData);
-        toast({
-            title: "Movie Added",
-            description: "New movie has been successfully added.",
-        });
-        navigate(-1);
+        const moviePayload = {
+            title: movieData.title,
+            description: movieData.description,
+            duration: movieData.duration,
+            releaseDate: movieData.releaseDate,
+            rating: movieData.rating,
+            language: movieData.language,
+            director: movieData.director,
+            movieCast: movieData.cast,
+            trailerUrl: movieData.trailerUrl,
+            status: movieData.status,
+            genreIds: movieData.genre.map(genreName => {
+                const selectedGenre = genreOptions.find(g => g.name === genreName);
+                return selectedGenre ? selectedGenre.id : null;
+            }).filter(id => id !== null)
+        };
+        try {
+            const response = await fetchWithAuth("/movies", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(moviePayload),
+            });
+
+            if (response.ok) {
+                toast({
+                    title: "Movie Added",
+                    description: "New movie has been successfully added.",
+                });
+                navigate(-1);
+            } else {
+                const errorData = await response.json();
+                toast({
+                    title: "Error",
+                    description: errorData.message || "Failed to add movie.",
+                    variant: "destructive",
+                });
+            }
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "An error occurred while adding the movie.",
+                variant: "destructive",
+            });
+        }
     };
 
     const handleInputChange = (field: string, value: string) => {
@@ -43,8 +121,6 @@ export const AddMoviePage = () => {
     const handleGenreChange = (newGenres: string[]) => {
         setMovieData(prev => ({ ...prev, genre: newGenres }));
     };
-
-    const genreOptions = ["Action", "Comedy", "Drama", "Horror", "Romance", "Sci-Fi", "Thriller"];
 
     return (
         <div className="min-h-screen bg-gradient-primary">

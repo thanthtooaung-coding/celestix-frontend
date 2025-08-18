@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
+import { fetchApi } from "@/lib/api";
 
 interface LoginFormProps {
   onSwitchToRegister?: () => void;
@@ -61,7 +62,7 @@ export const LoginForm = ({ onSwitchToRegister, onForgotPassword, onLogin, onClo
     if (!validate()) return;
 
     try {
-      const response = await fetch("http://47.130.149.164:8081/api/v1/auth/login", {
+      const response = await fetchApi("/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

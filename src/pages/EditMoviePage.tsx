@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { MultiSelect } from "@/components/ui/MultiSelect";
+import { fetchWithAuth } from "@/lib/api";
 
 export const EditMoviePage = () => {
     const { id } = useParams();
@@ -16,29 +17,111 @@ export const EditMoviePage = () => {
     const { toast } = useToast();
 
     const [movieData, setMovieData] = useState({
-        title: "Inception",
-        duration: "148",
-        genre: ["sci-fi", "action"],
-        rating: "8.8",
-        releaseDate: "2010-07-16",
-        language: "english",
-        director: "Christopher Nolan",
-        status: "playing",
-        cast: "Leonardo DiCaprio, Marion Cotillard, Tom Hardy",
-        trailerUrl: "https://youtube.com/watch?v=YoHD9XEInc0",
-        description: "A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O."
+        title: "",
+        duration: "",
+        genre: [] as string[],
+        rating: "",
+        releaseDate: "",
+        language: "",
+        director: "",
+        status: "",
+        cast: "",
+        trailerUrl: "",
+        description: ""
     });
 
-    const genreOptions = ["action", "comedy", "drama", "horror", "sci-fi", "romance", "thriller"];
+    const [genreOptions, setGenreOptions] = useState<any[]>([]);
+    const [templateData, setTemplateData] = useState<any>({
+        ratingOptions: [],
+        languageOptions: [],
+        statusOptions: []
+    });
+
+    useEffect(() => {
+        const fetchMovieAndRelatedData = async () => {
+            try {
+                const [genresResponse, templateResponse] = await Promise.all([
+                    fetchWithAuth("/movie-genres"),
+                    fetchWithAuth("/movies/template")
+                ]);
+
+                if (genresResponse.ok) {
+                    const genresData = await genresResponse.json();
+                    setGenreOptions(genresData.data);
+                } else {
+                    console.error("Failed to fetch genres");
+                }
+
+                if (templateResponse.ok) {
+                    const template = await templateResponse.json();
+                    setTemplateData(template.data);
+                } else {
+                    console.error("Failed to fetch movie template");
+                }
+
+                if (id) {
+                    const movieResponse = await fetchWithAuth(`/movies/${id}`);
+                    if (movieResponse.ok) {
+                        const movie = await movieResponse.json();
+                        setMovieData({
+                            ...movie.data,
+                            genre: movie.data.genres.map((g: any) => g.name),
+                            cast: movie.data.movieCast,
+                        });
+                    } else {
+                        console.error("Failed to fetch movie data");
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
+        };
+
+        fetchMovieAndRelatedData();
+    }, [id]);
 
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        toast({
-            title: "Movie Updated",
-            description: "Movie details have been successfully updated.",
-        });
-        navigate(-1);
+        const moviePayload = {
+            ...movieData,
+            movieCast: movieData.cast,
+            genreIds: movieData.genre.map(genreName => {
+                const selectedGenre = genreOptions.find(g => g.name === genreName);
+                return selectedGenre ? selectedGenre.id : null;
+            }).filter(id => id !== null)
+        };
+
+        try {
+            const response = await fetchWithAuth(`/movies/${id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(moviePayload),
+            });
+
+            if (response.ok) {
+                toast({
+                    title: "Movie Updated",
+                    description: "Movie details have been successfully updated.",
+                });
+                navigate(-1);
+            } else {
+                const errorData = await response.json();
+                toast({
+                    title: "Error",
+                    description: errorData.message || "Failed to update movie.",
+                    variant: "destructive",
+                });
+            }
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "An error occurred while updating the movie.",
+                variant: "destructive",
+            });
+        }
     };
 
     const handleInputChange = (field: string, value: string | string[]) => {
@@ -82,7 +165,7 @@ export const EditMoviePage = () => {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="duration" className="text-foreground">Duration (minutes)</Label>
+                                    <Label htmlFor="duration" className="text-foreground">Duration</Label>
                                     <Input
                                         id="duration"
                                         value={movieData.duration}
@@ -101,12 +184,16 @@ export const EditMoviePage = () => {
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="rating" className="text-foreground">Rating</Label>
-                                    <Input
-                                        id="rating"
-                                        value={movieData.rating}
-                                        onChange={(e) => handleInputChange("rating", e.target.value)}
-                                        className="bg-secondary/50 border-border/50 text-foreground"
-                                    />
+                                     <Select value={movieData.rating} onValueChange={(value) => handleInputChange("rating", value)}>
+                                        <SelectTrigger className="bg-secondary/50 border-border/50 text-foreground">
+                                            <SelectValue placeholder="Select rating" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {templateData.ratingOptions.map((option: any) => (
+                                                <SelectItem key={option.id} value={option.name}>{option.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="releaseDate" className="text-foreground">Release Date</Label>
@@ -122,14 +209,12 @@ export const EditMoviePage = () => {
                                     <Label htmlFor="language" className="text-foreground">Language</Label>
                                     <Select value={movieData.language} onValueChange={(value) => handleInputChange("language", value)}>
                                         <SelectTrigger className="bg-secondary/50 border-border/50 text-foreground">
-                                            <SelectValue />
+                                            <SelectValue placeholder="Select language" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="english">English</SelectItem>
-                                            <SelectItem value="spanish">Spanish</SelectItem>
-                                            <SelectItem value="french">French</SelectItem>
-                                            <SelectItem value="hindi">Hindi</SelectItem>
-                                            <SelectItem value="mandarin">Mandarin</SelectItem>
+                                            {templateData.languageOptions.map((option: any) => (
+                                                <SelectItem key={option.id} value={option.name}>{option.name}</SelectItem>
+                                            ))}
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -146,12 +231,12 @@ export const EditMoviePage = () => {
                                     <Label htmlFor="status" className="text-foreground">Status</Label>
                                     <Select value={movieData.status} onValueChange={(value) => handleInputChange("status", value)}>
                                         <SelectTrigger className="bg-secondary/50 border-border/50 text-foreground">
-                                            <SelectValue />
+                                            <SelectValue placeholder="Select status"/>
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="playing">Now Playing</SelectItem>
-                                            <SelectItem value="upcoming">Upcoming</SelectItem>
-                                            <SelectItem value="ended">Ended</SelectItem>
+                                            {templateData.statusOptions.map((option: any) => (
+                                                <SelectItem key={option.id} value={option.name}>{option.name}</SelectItem>
+                                            ))}
                                         </SelectContent>
                                     </Select>
                                 </div>
