@@ -1,56 +1,147 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { fetchWithAuth } from "@/lib/api";
 
 export const EditShowtimePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Mock data - in real app, this would fetch based on ID
   const [showtimeData, setShowtimeData] = useState({
-    movie: "inception",
-    theater: "theater-1",
-    date: "2024-01-15",
-    time: "19:30",
-    seatsAvailable: "120",
-    status: "available"
+    movieId: "",
+    theaterId: "",
+    showtimeDate: "",
+    showtimeTime: "",
+    seatsAvailable: "",
+    status: "",
+  });
+  const [templateData, setTemplateData] = useState({
+    movies: [],
+    theaters: [],
+    statusOptions: [],
   });
 
-  // Mock data for movies and theaters
-  const movies = [
-    { id: "inception", title: "Inception" },
-    { id: "avatar", title: "Avatar: The Way of Water" },
-    { id: "top-gun", title: "Top Gun: Maverick" },
-    { id: "dune", title: "Dune: Part Two" }
-  ];
+  useEffect(() => {
+    const fetchTemplateData = async () => {
+      try {
+        const response = await fetchWithAuth("/showtimes/template");
+        if (response.ok) {
+          const data = await response.json();
+          setTemplateData(data.data);
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to fetch template data.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "An error occurred while fetching template data.",
+          variant: "destructive",
+        });
+      }
+    };
 
-  const theaters = [
-    { id: "theater-1", name: "Theater 1 - Premium Hall" },
-    { id: "theater-2", name: "Theater 2 - Standard Hall" },
-    { id: "theater-3", name: "Theater 3 - IMAX" },
-    { id: "theater-4", name: "Theater 4 - VIP Experience" }
-  ];
+    const fetchShowtimeData = async () => {
+      try {
+        const response = await fetchWithAuth(`/showtimes/${id}`);
+        if (response.ok) {
+          const data = await response.json();
+          const showtime = data.data;
+          setShowtimeData({
+            movieId: showtime.movie.id.toString(),
+            theaterId: showtime.theater.id.toString(),
+            showtimeDate: showtime.showtimeDate,
+            showtimeTime: showtime.showtimeTime.slice(0, 5),
+            seatsAvailable: showtime.seatsAvailable.toString(),
+            status: showtime.status,
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to fetch showtime data.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "An error occurred while fetching showtime data.",
+          variant: "destructive",
+        });
+      }
+    };
 
-  const handleSubmit = (e: React.FormEvent) => {
+    fetchTemplateData();
+    fetchShowtimeData();
+  }, [id, toast]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Showtime Updated",
-      description: "Showtime has been successfully updated.",
-    });
-    navigate(-1);
+    const [hour, minute] = showtimeData.showtimeTime.split(":");
+    const payload = {
+      ...showtimeData,
+      showtimeDate: new Date(showtimeData.showtimeDate).toISOString().split('T')[0], // Ensure YYYY-MM-DD format
+      showtimeTime: showtimeData.showtimeTime,
+      seatsAvailable: parseInt(showtimeData.seatsAvailable),
+    };
+
+    try {
+      const response = await fetchWithAuth(`/showtimes/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Showtime Updated",
+          description: "Showtime has been successfully updated.",
+        });
+        navigate(-1);
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "Error",
+          description: errorData.message || "Failed to update showtime.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An error occurred while updating the showtime.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setShowtimeData(prev => ({
+    setShowtimeData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
@@ -72,21 +163,28 @@ export const EditShowtimePage = () => {
 
         <Card className="glass-card border-border/50">
           <CardHeader>
-            <CardTitle className="text-foreground">Showtime Information</CardTitle>
+            <CardTitle className="text-foreground">
+              Showtime Information
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="movie" className="text-foreground">Movie</Label>
-                  <Select value={showtimeData.movie} onValueChange={(value) => handleInputChange("movie", value)}>
+                  <Label htmlFor="movie" className="text-foreground">
+                    Movie
+                  </Label>
+                  <Select
+                    value={showtimeData.movieId}
+                    onValueChange={(value) => handleInputChange("movieId", value)}
+                  >
                     <SelectTrigger className="bg-secondary/50 border-border/50 text-foreground">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {movies.map((movie) => (
-                        <SelectItem key={movie.id} value={movie.id}>
+                      {templateData.movies.map((movie: any) => (
+                        <SelectItem key={movie.id} value={movie.id.toString()}>
                           {movie.title}
                         </SelectItem>
                       ))}
@@ -94,14 +192,21 @@ export const EditShowtimePage = () => {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="theater" className="text-foreground">Theater</Label>
-                  <Select value={showtimeData.theater} onValueChange={(value) => handleInputChange("theater", value)}>
+                  <Label htmlFor="theater" className="text-foreground">
+                    Theater
+                  </Label>
+                  <Select
+                    value={showtimeData.theaterId}
+                    onValueChange={(value) =>
+                      handleInputChange("theaterId", value)
+                    }
+                  >
                     <SelectTrigger className="bg-secondary/50 border-border/50 text-foreground">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {theaters.map((theater) => (
-                        <SelectItem key={theater.id} value={theater.id}>
+                      {templateData.theaters.map((theater: any) => (
+                        <SelectItem key={theater.id} value={theater.id.toString()}>
                           {theater.name}
                         </SelectItem>
                       ))}
@@ -109,44 +214,64 @@ export const EditShowtimePage = () => {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="date" className="text-foreground">Date</Label>
+                  <Label htmlFor="date" className="text-foreground">
+                    Date
+                  </Label>
                   <Input
                     id="date"
                     type="date"
-                    value={showtimeData.date}
-                    onChange={(e) => handleInputChange("date", e.target.value)}
+                    value={showtimeData.showtimeDate}
+                    min={new Date().toISOString().split("T")[0]}                    
+                    onChange={(e) =>
+                      handleInputChange("showtimeDate", e.target.value)
+                    }
                     className="bg-secondary/50 border-border/50 text-foreground"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="time" className="text-foreground">Time</Label>
+                  <Label htmlFor="time" className="text-foreground">
+                    Time
+                  </Label>
                   <Input
                     id="time"
                     type="time"
-                    value={showtimeData.time}
-                    onChange={(e) => handleInputChange("time", e.target.value)}
+                    value={showtimeData.showtimeTime}
+                    onChange={(e) =>
+                      handleInputChange("showtimeTime", e.target.value)
+                    }
                     className="bg-secondary/50 border-border/50 text-foreground"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="seatsAvailable" className="text-foreground">Seats Available</Label>
+                  <Label htmlFor="seatsAvailable" className="text-foreground">
+                    Seats Available
+                  </Label>
                   <Input
                     id="seatsAvailable"
                     value={showtimeData.seatsAvailable}
-                    onChange={(e) => handleInputChange("seatsAvailable", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("seatsAvailable", e.target.value)
+                    }
                     className="bg-secondary/50 border-border/50 text-foreground"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="status" className="text-foreground">Status</Label>
-                  <Select value={showtimeData.status} onValueChange={(value) => handleInputChange("status", value)}>
+                  <Label htmlFor="status" className="text-foreground">
+                    Status
+                  </Label>
+                  <Select
+                    value={showtimeData.status}
+                    onValueChange={(value) => handleInputChange("status", value)}
+                  >
                     <SelectTrigger className="bg-secondary/50 border-border/50 text-foreground">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="available">Available</SelectItem>
-                      <SelectItem value="sold-out">Sold Out</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                      {templateData.statusOptions.map((status: any) => (
+                        <SelectItem key={status.id} value={status.name}>
+                          {status.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
