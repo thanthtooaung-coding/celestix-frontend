@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { fetchWithAuth } from "@/lib/api";
 
 type SeatType = 'premium' | 'regular' | 'economy' | 'basic';
 
@@ -16,11 +17,30 @@ interface SeatPricing {
   basic: string;
 }
 
-// Mock theater data - in real app this would come from API
-const theaterData = {
-  "1": { name: "CINEMA 01", location: "J Cineplex (Junction City)" },
-  "2": { name: "CINEMA 02", location: "J Cineplex (Junction City)" },
-  "3": { name: "CINEMA 03", location: "J Cineplex (Junction City)" },
+type TheaterData = {
+  id: number;
+  name: string;
+  location: string;
+  seatConfiguration: {
+    row: number;
+    column: number;
+  };
+  premiumSeat: {
+    totalRows: number;
+    totalPrice: number;
+  };
+  regularSeat: {
+    totalRows: number;
+    totalPrice: number;
+  };
+  economySeat: {
+    totalRows: number;
+    totalPrice: number;
+  };
+  basicSeat: {
+    totalRows: number;
+    totalPrice: number;
+  };
 };
 
 export const TheaterSeatPricingPage = () => {
@@ -28,43 +48,74 @@ export const TheaterSeatPricingPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const theater = theaterId ? theaterData[theaterId as keyof typeof theaterData] : null;
-  
+  const [theater, setTheater] = useState<TheaterData | null>(null);
   const [seatPricing, setSeatPricing] = useState<SeatPricing>({
-    premium: "26000",
-    regular: "12000",
-    economy: "11000",
-    basic: "5000"
+    premium: "0",
+    regular: "0",
+    economy: "0",
+    basic: "0"
   });
 
-  // Generate seat layout (14 rows, 12 seats per row)
+  useEffect(() => {
+    if (theaterId) {
+      const fetchTheaterData = async () => {
+        try {
+          const response = await fetchWithAuth(`/theaters/${theaterId}`);
+          if (response.ok) {
+            const data = await response.json();
+            setTheater(data.data);
+            setSeatPricing({
+              premium: data.data.premiumSeat.totalPrice.toString(),
+              regular: data.data.regularSeat.totalPrice.toString(),
+              economy: data.data.economySeat.totalPrice.toString(),
+              basic: data.data.basicSeat.totalPrice.toString(),
+            });
+          } else {
+            toast({
+              title: "Error",
+              description: "Failed to fetch theater data.",
+              variant: "destructive",
+            });
+          }
+        } catch (error) {
+          toast({
+            title: "Error",
+            description: "An error occurred while fetching theater data.",
+            variant: "destructive",
+          });
+        }
+      };
+      fetchTheaterData();
+    }
+  }, [theaterId, toast]);
+
   const generateSeatLayout = () => {
-    const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'];
-    const seatsPerRow = 12;
+    if (!theater) return [];
+
+    const { row, column } = theater.seatConfiguration;
+    const { premiumSeat, regularSeat, economySeat } = theater;
+    const rows = Array.from({ length: row }, (_, i) => String.fromCharCode(65 + i));
     
-    return rows.map(row => {
+    return rows.map((rowLabel, rowIndex) => {
       const seats = [];
-      for (let i = 1; i <= seatsPerRow; i++) {
-        let seatType: SeatType;
-        // Define seat types based on position
-        if (row <= 'B') {
-          seatType = 'premium'; // Front premium rows
-        } else if (row <= 'F') {
-          seatType = 'regular'; // Middle regular rows
-        } else if (row <= 'J') {
-          seatType = 'economy'; // Economy rows
-        } else {
-          seatType = 'basic'; // Back basic rows
+      for (let i = 1; i <= column; i++) {
+        let seatType: SeatType = 'basic';
+        if (rowIndex < premiumSeat.totalRows) {
+          seatType = 'premium';
+        } else if (rowIndex < premiumSeat.totalRows + regularSeat.totalRows) {
+          seatType = 'regular';
+        } else if (rowIndex < premiumSeat.totalRows + regularSeat.totalRows + economySeat.totalRows) {
+          seatType = 'economy';
         }
         
         seats.push({
-          id: `${row}${i}`,
-          row,
+          id: `${rowLabel}${i}`,
+          row: rowLabel,
           number: i,
           type: seatType
         });
       }
-      return { row, seats };
+      return { row: rowLabel, seats };
     });
   };
 
@@ -87,25 +138,53 @@ export const TheaterSeatPricingPage = () => {
     }));
   };
 
-  const handleSave = () => {
-    // In real app, this would update the theater pricing in database
-    toast({
-      title: "Pricing Updated",
-      description: "Seat pricing has been successfully updated for " + theater?.name,
-    });
+  const handleSave = async () => {
+    if (!theater) return;
+
+    const payload = {
+      ...theater,
+      premiumSeat: { ...theater.premiumSeat, totalPrice: parseFloat(seatPricing.premium) },
+      regularSeat: { ...theater.regularSeat, totalPrice: parseFloat(seatPricing.regular) },
+      economySeat: { ...theater.economySeat, totalPrice: parseFloat(seatPricing.economy) },
+      basicSeat: { ...theater.basicSeat, totalPrice: parseFloat(seatPricing.basic) }
+    };
+
+    try {
+      const response = await fetchWithAuth(`/theaters/${theater.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Pricing Updated",
+          description: `Seat pricing has been successfully updated for ${theater.name}`,
+        });
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "Error",
+          description: errorData.message || "Failed to update pricing.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An error occurred while updating pricing.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (!theater) {
     return (
       <div className="min-h-screen bg-background p-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-foreground">Theater Not Found</h1>
-          <Button 
-            onClick={() => navigate('/admin')} 
-            className="mt-4 bg-gradient-accent hover:shadow-glow"
-          >
-            Back to Admin
-          </Button>
+          <h1 className="text-2xl font-bold text-foreground">Loading Theater...</h1>
         </div>
       </div>
     );
@@ -118,7 +197,7 @@ export const TheaterSeatPricingPage = () => {
         <div className="flex items-center mb-6">
           <ArrowLeft 
             className="w-6 h-6 text-foreground mr-4 cursor-pointer hover:text-primary" 
-            onClick={() => navigate('/admin')}
+            onClick={() => navigate('/admin/theaters')}
           />
           <div>
             <h1 className="text-2xl font-bold text-foreground">{theater.name} - Seat Pricing</h1>
@@ -271,7 +350,7 @@ export const TheaterSeatPricingPage = () => {
                 </div>
                 <div>
                   <span className="text-muted-foreground">Layout:</span>
-                  <span className="ml-2 text-foreground">14x12 (168 seats)</span>
+                  <span className="ml-2 text-foreground">{`${theater.seatConfiguration.row}x${theater.seatConfiguration.column} (${theater.seatConfiguration.row * theater.seatConfiguration.column} seats)`}</span>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Status:</span>
