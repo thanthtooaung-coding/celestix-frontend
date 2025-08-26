@@ -144,10 +144,13 @@ export const MoviesTable = () => {
                 <tr key={movie.id} className="border-b border-border/30 hover:bg-secondary/30 transition-colors">
                   <td className="p-4">
                     <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-secondary rounded-lg flex items-center justify-center text-2xl">
-                        {/* You can replace this with an actual image if you have a URL */}
-                        🎬
-                      </div>
+                      <div className="w-12 h-16 bg-secondary rounded-lg flex items-center justify-center text-2xl overflow-hidden">
+                        {movie.moviePosterUrl ? (
+                            <img src={movie.moviePosterUrl} alt={movie.title} className="w-full h-full object-cover" />
+                        ) : (
+                            <span>🎬</span>
+                        )}
+                        </div>
                       <span className="font-medium text-foreground">{movie.title}</span>
                     </div>
                   </td>

@@ -4,7 +4,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Outlet, Navigate, useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
-import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { AddMoviePage } from "./pages/AddMoviePage";
 import { AddFoodPage } from "./pages/AddFoodPage";
@@ -67,9 +66,8 @@ const UserLayout = () => {
     return (
         <div className="min-h-screen bg-gradient-cinema">
             <Header
-                // We will manage current page via active NavLink instead of state
                 currentPage=""
-                onPageChange={()=>{}} // Will be replaced by Links
+                onPageChange={()=>{}}
                 onLogout={handleLogout}
                 onLoginClick={() => navigate("/login")}
                 onRegisterClick={() => navigate("/register")}
@@ -90,7 +88,7 @@ const App = () => (
         <Routes>
           {/* User Facing Routes */}
           <Route element={<UserLayout />}>
-            <Route index path="/" element={<HomePage onPageChange={() => {}} />} />
+            <Route index path="/" element={<HomePage />} />
             <Route path="/discover" element={<DiscoverPage onPageChange={() => {}} isAuthenticated={isAuthenticated()} />} />
             <Route path="/coming-soon" element={<ComingSoonPage onPageChange={() => {}} isAuthenticated={isAuthenticated()} />} />
             <Route path="/movies/:id" element={<MovieDetailsPage movieId={null} onPageChange={() => {}} />} />
@@ -104,7 +102,7 @@ const App = () => (
           <Route path="/login" element={<LoginForm onLogin={(role) => {
               localStorage.setItem("role", role);
               window.location.href = role === 'ADMIN' ? '/admin' : '/';
-          }} />} />
+          }} onSwitchToRegister={() => {window.location.href ='/register'}} />} />
           <Route path="/register" element={<RegisterForm onSwitchToLogin={() => {window.location.href ='/login'}} />} />
           <Route path="/forgot-password" element={<ForgotPasswordForm onBack={()=>{window.location.href ='/login'}} />} />
 

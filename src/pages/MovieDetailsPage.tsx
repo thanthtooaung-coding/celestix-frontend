@@ -1,43 +1,73 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Star, Calendar, Play, Heart, Share2 } from "lucide-react";
+import { Clock, Star, Calendar, Play, Heart } from "lucide-react";
+import { fetchApi } from "@/lib/api";
 
-interface MovieDetailsPageProps {
-  movieId: string | null;
-  onPageChange: (page: string, movieId?: string) => void;
+interface Movie {
+  id: string;
+  title: string;
+  moviePosterUrl: string;
+  duration: string;
+  rating: string;
+  genres: { name: string }[];
+  releaseDate: string;
+  description: string;
+  director: string;
+  movieCast: string;
+  trailerUrl: string;
 }
 
-export const MovieDetailsPage = ({ movieId, onPageChange }: MovieDetailsPageProps) => {
+export const MovieDetailsPage = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [isLiked, setIsLiked] = useState(false);
+  const [movie, setMovie] = useState<Movie | null>(null);
 
-  // Mock movie data - in real app this would come from an API
-  const movie = {
-    id: "1",
-    title: "The Suicide Squad",
-    image: "https://images.unsplash.com/photo-1489599904797-75ef9e90338d?w=300&h=450&fit=crop",
-    duration: "115 minutes",
-    rating: 8.2,
-    genre: "Action, Comedy",
-    releaseDate: "2021-08-05",
-    ageRating: "R",
-    description: "Welcome to hell—a.k.a. Belle Reve, the prison with the highest mortality rate in the US. Where the worst Super-Villains are kept and where they will do anything to get out—even join the super-secret, super-shady Task Force X.",
-    director: "James Gunn",
-    cast: ["Margot Robbie", "Idris Elba", "John Cena", "Joel Kinnaman"],
-    trailerUrl: "https://www.youtube.com/watch?v=6B8OKFkUe9A"
-  };
+  useEffect(() => {
+    const fetchMovie = async () => {
+      if (id) {
+        try {
+          const response = await fetchApi(`/public/movies/${id}`);
+          if (response.ok) {
+            const data = await response.json();
+            setMovie(data.data);
+          } else {
+            console.error("Failed to fetch movie details");
+          }
+        } catch (error) {
+          console.error("Error fetching movie details:", error);
+        }
+      }
+    };
+
+    fetchMovie();
+  }, [id]);
 
   const handleWatchTrailer = () => {
-    window.open(movie.trailerUrl, '_blank');
+    if (movie?.trailerUrl) {
+      window.open(movie.trailerUrl, '_blank');
+    }
   };
+
+  if (!movie) {
+    return (
+      <div className="min-h-screen bg-gradient-cinema flex items-center justify-center">
+        <p className="text-white text-2xl">Loading...</p>
+      </div>
+    );
+  }
+
+  const castList = movie.movieCast ? movie.movieCast.split(',').map(actor => actor.trim()) : [];
 
   return (
     <div className="min-h-screen bg-gradient-cinema">
       <div className="container mx-auto px-4 py-8">
-        <Button 
-          variant="ghost" 
-          onClick={() => onPageChange("home")}
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/")}
           className="mb-6 text-white hover:bg-white/10"
         >
           ← Back to Home
@@ -48,7 +78,7 @@ export const MovieDetailsPage = ({ movieId, onPageChange }: MovieDetailsPageProp
           <div className="lg:col-span-1">
             <Card className="overflow-hidden bg-card/50 border-border/50">
               <img
-                src={movie.image}
+                src={movie.moviePosterUrl}
                 alt={movie.title}
                 className="w-full aspect-[2/3] object-cover"
               />
@@ -61,7 +91,7 @@ export const MovieDetailsPage = ({ movieId, onPageChange }: MovieDetailsPageProp
               <div className="flex items-center gap-4 mb-4">
                 <h1 className="text-4xl font-bold text-white">{movie.title}</h1>
                 <Badge className="bg-primary text-primary-foreground">
-                  {movie.ageRating}
+                  {movie.rating}
                 </Badge>
               </div>
 
@@ -81,28 +111,28 @@ export const MovieDetailsPage = ({ movieId, onPageChange }: MovieDetailsPageProp
               </div>
 
               <div className="flex gap-3 mb-6">
-                <Button 
+                <Button
                   className="bg-gradient-accent hover:shadow-glow"
-                  onClick={() => onPageChange("booking", movie.id)}
+                  onClick={() => navigate(`/booking/${movie.id}`)}
                 >
                   Book Tickets
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="text-white border-white/20 hover:bg-white/10"
                   onClick={handleWatchTrailer}
                 >
                   <Play className="w-4 h-4 mr-2" />
                   Watch Trailer
                 </Button>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="icon"
                   className="text-white hover:bg-white/10"
                   onClick={() => setIsLiked(!isLiked)}
                 >
                   <Heart className={`w-5 h-5 ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
-                </Button>                
+                </Button>
               </div>
             </div>
 
@@ -118,14 +148,16 @@ export const MovieDetailsPage = ({ movieId, onPageChange }: MovieDetailsPageProp
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-white mb-3">Genre</h3>
-                <p className="text-muted-foreground">{movie.genre}</p>
+                <p className="text-muted-foreground">
+                  {movie.genres.map(g => g.name).join(', ')}
+                </p>
               </div>
             </div>
 
             <div>
               <h3 className="text-lg font-semibold text-white mb-3">Cast</h3>
               <div className="flex flex-wrap gap-2">
-                {movie.cast.map((actor, index) => (
+                {castList.map((actor, index) => (
                   <Badge key={index} variant="outline" className="text-white border-white/20">
                     {actor}
                   </Badge>

@@ -27,6 +27,8 @@ export const AddMoviePage = () => {
         status: ""
     });
 
+    const [posterFile, setPosterFile] = useState<File | null>(null);
+    const [posterPreview, setPosterPreview] = useState<string | null>(null);
     const [genreOptions, setGenreOptions] = useState<any[]>([]);
     const [templateData, setTemplateData] = useState<any>({
         ratingOptions: [],
@@ -63,20 +65,53 @@ export const AddMoviePage = () => {
         fetchInitialData();
     }, []);
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setPosterFile(file);
+            setPosterPreview(URL.createObjectURL(file));
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        let moviePosterUrl = "";
+
+        if (posterFile) {
+            const formData = new FormData();
+            formData.append("file", posterFile);
+
+            try {
+                const mediaResponse = await fetchWithAuth("/media", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                if (mediaResponse.ok) {
+                    const mediaData = await mediaResponse.json();
+                    moviePosterUrl = mediaData.data.url;
+                } else {
+                    toast({
+                        title: "Error",
+                        description: "Failed to upload movie poster.",
+                        variant: "destructive",
+                    });
+                    return;
+                }
+            } catch (error) {
+                toast({
+                    title: "Error",
+                    description: "An error occurred while uploading the poster.",
+                    variant: "destructive",
+                });
+                return;
+            }
+        }
+
         const moviePayload = {
-            title: movieData.title,
-            description: movieData.description,
-            duration: movieData.duration,
-            releaseDate: movieData.releaseDate,
-            rating: movieData.rating,
-            language: movieData.language,
-            director: movieData.director,
-            movieCast: movieData.cast,
-            trailerUrl: movieData.trailerUrl,
-            status: movieData.status,
+            ...movieData,
+            moviePosterUrl,
             genreIds: movieData.genre.map(genreName => {
                 const selectedGenre = genreOptions.find(g => g.name === genreName);
                 return selectedGenre ? selectedGenre.id : null;
@@ -186,11 +221,9 @@ export const AddMoviePage = () => {
                                         <SelectValue placeholder="Select rating" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="G">G</SelectItem>
-                                        <SelectItem value="PG">PG</SelectItem>
-                                        <SelectItem value="PG-13">PG-13</SelectItem>
-                                        <SelectItem value="R">R</SelectItem>
-                                        <SelectItem value="NC-17">NC-17</SelectItem>
+                                        {templateData.ratingOptions.map((option: any) => (
+                                            <SelectItem key={option.id} value={option.name}>{option.name}</SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -218,11 +251,9 @@ export const AddMoviePage = () => {
                                         <SelectValue placeholder="Select language" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="English">English</SelectItem>
-                                        <SelectItem value="Spanish">Spanish</SelectItem>
-                                        <SelectItem value="French">French</SelectItem>
-                                        <SelectItem value="German">German</SelectItem>
-                                        <SelectItem value="Hindi">Hindi</SelectItem>
+                                        {templateData.languageOptions.map((option: any) => (
+                                            <SelectItem key={option.id} value={option.name}>{option.name}</SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -249,8 +280,9 @@ export const AddMoviePage = () => {
                                         <SelectValue placeholder="Select status" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="Now Showing">Now Showing</SelectItem>
-                                        <SelectItem value="Coming Soon">Coming Soon</SelectItem>
+                                        {templateData.statusOptions.map((option: any) => (
+                                            <SelectItem key={option.id} value={option.name}>{option.name}</SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -299,14 +331,17 @@ export const AddMoviePage = () => {
                                 Movie Poster
                             </label>
                             <div className="border-2 border-dashed border-border/50 rounded-lg p-6 text-center">
-                                <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                                <p className="text-muted-foreground mb-2">
-                                    Click to upload or drag and drop
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                    PNG, JPG, GIF up to 10MB
-                                </p>
-                                <input type="file" className="hidden" accept="image/*" />
+                                <Input type="file" onChange={handleFileChange} className="hidden" id="poster-upload" />
+                                <label htmlFor="poster-upload" className="cursor-pointer">
+                                    <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                                    <p className="text-muted-foreground mb-2">
+                                        Click to upload or drag and drop
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        PNG, JPG, GIF up to 10MB
+                                    </p>
+                                </label>
+                                {posterPreview && <img src={posterPreview} alt="Poster Preview" className="mt-4 mx-auto h-32" />}
                             </div>
                         </div>
 

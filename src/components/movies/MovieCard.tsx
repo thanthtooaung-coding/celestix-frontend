@@ -9,10 +9,11 @@ interface MovieCardProps {
     title: string;
     image: string;
     duration: string;
-    rating: number;
+    rating: string;
     genre: string;
     releaseDate: string;
     ageRating: string;
+    trailerUrl: string;
   };
   onBookTicket?: (movieId: string) => void;
   onViewDetails?: (movieId: string) => void;
@@ -20,16 +21,12 @@ interface MovieCardProps {
 
 export const MovieCard = ({ movie, onBookTicket, onViewDetails }: MovieCardProps) => {
   const handleWatchTrailer = () => {
-    // Direct YouTube trailer links based on movie title
-    const trailerLinks: { [key: string]: string } = {
-      "Spider-Man: No Way Home": "https://www.youtube.com/watch?v=JfVOs4VSpmA",
-      "The Batman": "https://www.youtube.com/watch?v=mqqft2x_Aa4",
-      "Top Gun: Maverick": "https://www.youtube.com/watch?v=qSqVVswa420",
-      "Doctor Strange 2": "https://www.youtube.com/watch?v=aWzlQ2N6qqg"
-    };
-    
-    const trailerUrl = trailerLinks[movie.title] || `https://www.youtube.com/results?search_query=${encodeURIComponent(movie.title + ' trailer')}`;
-    window.open(trailerUrl, '_blank');
+    if (movie.trailerUrl) {
+      window.open(movie.trailerUrl, '_blank');
+    } else {
+      const searchQuery = encodeURIComponent(`${movie.title} trailer`);
+      window.open(`https://www.youtube.com/results?search_query=${searchQuery}`, '_blank');
+    }
   };
 
   return (
@@ -75,7 +72,7 @@ export const MovieCard = ({ movie, onBookTicket, onViewDetails }: MovieCardProps
         <Badge 
           className="absolute top-2 left-2 bg-primary text-primary-foreground"
         >
-          {movie.ageRating}
+          {movie.rating}
         </Badge>
 
         {/* Rating */}
