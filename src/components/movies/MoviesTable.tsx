@@ -33,10 +33,12 @@ export const MoviesTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState<Record<string, string[]>>({ genre: [] });
   const [movies, setMovies] = useState<any[]>([]);
+  const [genreOptions, setGenreOptions] = useState<string[]>([]);
   const itemsPerPage = 12;
 
    useEffect(() => {
     fetchMovies();
+    fetchGenres();
   }, []);
 
   const fetchMovies = async () => {
@@ -62,6 +64,32 @@ export const MoviesTable = () => {
         });
       }
     };
+
+  const fetchGenres = async () => {
+    try {
+      const response = await fetchWithAuth("/movie-genres");
+      if (response.ok) {
+        const data = await response.json();
+        // Extract the name from each genre object to create an array of strings
+        const names = data.data.map((genre: { name: string }) => genre.name);
+        setGenreOptions(names);
+      } else {
+        console.error("Failed to fetch genres");
+        toast({
+          title: "Error",
+          description: "Failed to fetch genre options for filtering.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching genres:", error);
+      toast({
+          title: "Error",
+          description: "An error occurred while fetching genre options.",
+          variant: "destructive",
+      });
+    }
+  };
 
   const handleDelete = async (movieId: number) => {
     try {
@@ -97,7 +125,7 @@ export const MoviesTable = () => {
     {
       title: "By Genre",
       stateKey: "genre",
-      options: ["Action", "Adventure", "Animation", "Comedy", "Crime", "Documentary", "Drama", "Family", "Fantasy", "History", "Horror", "Music", "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western"],
+      options: genreOptions,
     },
   ];
 
@@ -163,7 +191,7 @@ export const MoviesTable = () => {
                   <td className="p-4"><StatusBadge status={movie.status} /></td>
                   <td className="p-4">
                     <div className="flex items-center space-x-2">
-                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => navigate(`/edit-movie/${movie.id}`)}><Edit className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => navigate(`/admin/movies/edit/${movie.id}`)}><Edit className="w-4 h-4" /></Button>
                       <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => handleDelete(movie.id)}><Trash2 className="w-4 h-4" /></Button>
                     </div>
                   </td>
