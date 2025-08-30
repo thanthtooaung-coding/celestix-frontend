@@ -13,6 +13,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -65,6 +66,8 @@ export const BookingsTable = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isSeatsDialogOpen, setIsSeatsDialogOpen] = useState(false);
   const [isShowtimeDialogOpen, setIsShowtimeDialogOpen] = useState(false);
+  const [isLimitDialogOpen, setIsLimitDialogOpen] = useState(false);
+  const [bookingLimit, setBookingLimit] = useState("");
   
   // State to hold the booking object for the selected row
   const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
@@ -72,7 +75,6 @@ export const BookingsTable = () => {
   const [bookingToDelete, setBookingToDelete] = useState<string | null>(null);
 
   useEffect(() => {
-    // Fetching logic remains the same
     const fetchBookings = async () => {
       try {
         const response = await fetchWithAuth("/bookings");
@@ -88,7 +90,19 @@ export const BookingsTable = () => {
         setLoading(false);
       }
     };
+
+    const fetchBookingLimit = async () => {
+      try {
+        const response = await fetchWithAuth("/configurations/MAX_BOOKINGS_PER_USER");
+        if (response.ok) {
+          const data = await response.json();
+          setBookingLimit(data.data.value);
+        }
+      } catch (error) {
+      }
+    };
     fetchBookings();
+    fetchBookingLimit();
   }, [toast]);
 
   const handleDelete = async (bookingId: string) => {
@@ -110,6 +124,24 @@ export const BookingsTable = () => {
     }
   };
 
+  const handleUpdateLimit = async () => {
+    try {
+      const response = await fetchWithAuth("/configurations/MAX_BOOKINGS_PER_USER", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ value: bookingLimit }),
+      });
+      if (response.ok) {
+        toast({ title: "Success", description: "Booking limit updated successfully." });
+        setIsLimitDialogOpen(false);
+      } else {
+        toast({ title: "Error", description: "Failed to update booking limit.", variant: "destructive" });
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "An error occurred while updating the limit.", variant: "destructive" });
+    }
+  };
+
   const filteredBookings = bookings
     .filter((b) =>
         b.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -128,6 +160,31 @@ export const BookingsTable = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">Bookings</h1>
+          <Dialog open={isLimitDialogOpen} onOpenChange={setIsLimitDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>Manage Booking Limit</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Manage Booking Limit</DialogTitle>
+                <DialogDescription>
+                  Set the maximum number of bookings a user can have.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="py-4">
+                <Input
+                  type="number"
+                  value={bookingLimit}
+                  onChange={(e) => setBookingLimit(e.target.value)}
+                  placeholder="Enter booking limit"
+                />
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsLimitDialogOpen(false)}>Cancel</Button>
+                <Button onClick={handleUpdateLimit}>Save Changes</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <Card className="glass-card p-4">
