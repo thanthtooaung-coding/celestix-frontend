@@ -38,71 +38,68 @@ export const EditShowtimePage = () => {
     theaters: [],
     statusOptions: [],
   });
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchTemplateData = async () => {
+    const fetchData = async () => {
+      setIsLoading(true);
       try {
-        const response = await fetchWithAuth("/showtimes/template");
-        if (response.ok) {
-          const data = await response.json();
-          setTemplateData(data.data);
-        } else {
-          toast({
-            title: "Error",
-            description: "Failed to fetch template data.",
-            variant: "destructive",
-          });
+        // First, fetch the template data for the dropdowns
+        const templateResponse = await fetchWithAuth("/showtimes/template");
+        if (!templateResponse.ok) {
+          throw new Error("Failed to fetch template data.");
         }
+        const templateJson = await templateResponse.json();
+        setTemplateData(templateJson.data);
+
+        // THEN, fetch the specific showtime data
+        const showtimeResponse = await fetchWithAuth(`/showtimes/${id}`);
+        if (!showtimeResponse.ok) {
+          throw new Error("Failed to fetch showtime data.");
+        }
+        const showtimeJson = await showtimeResponse.json();
+        const showtime = showtimeJson.data;
+        
+        setShowtimeData({
+          movieId: showtime.movie.id.toString(),
+          theaterId: showtime.theater.id.toString(),
+          showtimeDate: showtime.showtimeDate,
+          showtimeTime: showtime.showtimeTime.slice(0, 5), // Format to HH:mm
+          seatsAvailable: showtime.seatsAvailable.toString(),
+          status: showtime.status,
+        });
+
       } catch (error) {
         toast({
           title: "Error",
-          description: "An error occurred while fetching template data.",
+          description: error.message || "An error occurred while fetching data.",
           variant: "destructive",
         });
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    const fetchShowtimeData = async () => {
-      try {
-        const response = await fetchWithAuth(`/showtimes/${id}`);
-        if (response.ok) {
-          const data = await response.json();
-          const showtime = data.data;
-          setShowtimeData({
-            movieId: showtime.movie.id.toString(),
-            theaterId: showtime.theater.id.toString(),
-            showtimeDate: showtime.showtimeDate,
-            showtimeTime: showtime.showtimeTime.slice(0, 5),
-            seatsAvailable: showtime.seatsAvailable.toString(),
-            status: showtime.status,
-          });
-        } else {
-          toast({
-            title: "Error",
-            description: "Failed to fetch showtime data.",
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "An error occurred while fetching showtime data.",
-          variant: "destructive",
-        });
-      }
-    };
-
-    fetchTemplateData();
-    fetchShowtimeData();
+    fetchData();
   }, [id, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const [hour, minute] = showtimeData.showtimeTime.split(":");
+    
+    // Validate that minutes are in 10-minute increments
+    const [, minutes] = showtimeData.showtimeTime.split(":").map(Number);
+    if (minutes % 10 !== 0) {
+      toast({
+        title: "Invalid Time",
+        description: "Showtime must be in 10-minute increments (e.g., 10:00, 10:10, 10:20).",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const payload = {
       ...showtimeData,
-      showtimeDate: new Date(showtimeData.showtimeDate).toISOString().split('T')[0], // Ensure YYYY-MM-DD format
-      showtimeTime: showtimeData.showtimeTime,
+      showtimeTime: `${showtimeData.showtimeTime}:00`, // Ensure seconds are included for backend
       seatsAvailable: parseInt(showtimeData.seatsAvailable),
     };
 
@@ -145,6 +142,14 @@ export const EditShowtimePage = () => {
     }));
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-primary p-6 flex justify-center items-center">
+        <p className="text-white">Loading...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-primary p-6">
       <div className="max-w-2xl mx-auto">
@@ -180,7 +185,7 @@ export const EditShowtimePage = () => {
                     onValueChange={(value) => handleInputChange("movieId", value)}
                   >
                     <SelectTrigger className="bg-secondary/50 border-border/50 text-foreground">
-                      <SelectValue />
+                      <SelectValue placeholder="Select a movie" />
                     </SelectTrigger>
                     <SelectContent>
                       {templateData.movies.map((movie: any) => (
@@ -202,7 +207,7 @@ export const EditShowtimePage = () => {
                     }
                   >
                     <SelectTrigger className="bg-secondary/50 border-border/50 text-foreground">
-                      <SelectValue />
+                      <SelectValue placeholder="Select a theater" />
                     </SelectTrigger>
                     <SelectContent>
                       {templateData.theaters.map((theater: any) => (
@@ -235,6 +240,7 @@ export const EditShowtimePage = () => {
                   <Input
                     id="time"
                     type="time"
+                    step="600" // 10 minutes in seconds
                     value={showtimeData.showtimeTime}
                     onChange={(e) =>
                       handleInputChange("showtimeTime", e.target.value)
@@ -248,11 +254,10 @@ export const EditShowtimePage = () => {
                   </Label>
                   <Input
                     id="seatsAvailable"
+                    type="number"
                     value={showtimeData.seatsAvailable}
-                    onChange={(e) =>
-                      handleInputChange("seatsAvailable", e.target.value)
-                    }
-                    className="bg-secondary/50 border-border/50 text-foreground"
+                    readOnly
+                    className="bg-muted/50 border-border/50 text-foreground"
                   />
                 </div>
                 <div className="space-y-2">
@@ -264,7 +269,7 @@ export const EditShowtimePage = () => {
                     onValueChange={(value) => handleInputChange("status", value)}
                   >
                     <SelectTrigger className="bg-secondary/50 border-border/50 text-foreground">
-                      <SelectValue />
+                      <SelectValue placeholder="Select a status" />
                     </SelectTrigger>
                     <SelectContent>
                       {templateData.statusOptions.map((status: any) => (

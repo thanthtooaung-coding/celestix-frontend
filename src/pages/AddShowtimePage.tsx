@@ -104,6 +104,18 @@ export const AddShowtimePage = () => {
     setShowtimeData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const time = e.target.value;
+    const [, minutes] = time.split(':').map(Number);
+
+    if (minutes % 10 !== 0) {
+      e.target.setCustomValidity("Time must be in 10-minute increments.");
+    } else {
+      e.target.setCustomValidity("");
+    }
+    handleInputChange("showtimeTime", time);
+  };
+
   // Specific handler for theater selection change
   const handleTheaterChange = async (theaterId: string) => {
     // First, update the theaterId in the state
@@ -115,7 +127,7 @@ export const AddShowtimePage = () => {
         const response = await fetchWithAuth(`/theaters/${theaterId}`);
         if (response.ok) {
           const result = await response.json();
-          const capacity = result.data.capacity;
+          const capacity = result.data.seatConfiguration.row * result.data.seatConfiguration.column;
           // Update the seatsAvailable field with the fetched capacity
           handleInputChange("seatsAvailable", capacity.toString());
         } else {
@@ -226,9 +238,7 @@ export const AddShowtimePage = () => {
                 <Input
                   type="time"
                   value={showtimeData.showtimeTime}
-                  onChange={(e) =>
-                    handleInputChange("showtimeTime", e.target.value)
-                  }
+                  onChange={handleTimeChange}
                   required
                 />
               </div>

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { MovieCard } from "@/components/movies/MovieCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Play, Calendar, Clock } from "lucide-react";
+import { Play, Calendar, Clock, Film, VideoOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { fetchApi } from "@/lib/api";
 
@@ -15,9 +15,12 @@ export const HomePage = ({ isAuthenticated }: HomePageProps) => {
   const navigate = useNavigate();
   const [movies, setMovies] = useState<any[]>([]);
   const [schedules, setSchedules] = useState<any[]>([]);
+  const [loadingMovies, setLoadingMovies] = useState(true);
+  const [loadingSchedules, setLoadingSchedules] = useState(true);
 
   useEffect(() => {
     const fetchMovies = async () => {
+      setLoadingMovies(true);
       try {
         const response = await fetchApi(`/public/movies?status=${selectedCategory.replace('now-playing', 'Now Showing').replace('coming-soon', 'Coming Soon')}`);
         if (response.ok) {
@@ -25,9 +28,13 @@ export const HomePage = ({ isAuthenticated }: HomePageProps) => {
           setMovies(data.data);
         } else {
           console.error("Failed to fetch movies");
+          setMovies([]);
         }
       } catch (error) {
         console.error("Error fetching movies:", error);
+        setMovies([]);
+      } finally {
+        setLoadingMovies(false);
       }
     };
 
@@ -36,6 +43,7 @@ export const HomePage = ({ isAuthenticated }: HomePageProps) => {
 
   useEffect(() => {
     const fetchSchedules = async () => {
+      setLoadingSchedules(true);
       try {
         const response = await fetchApi("/public/showtimes/grouped");
         if (response.ok) {
@@ -43,9 +51,13 @@ export const HomePage = ({ isAuthenticated }: HomePageProps) => {
           setSchedules(data.data);
         } else {
           console.error("Failed to fetch schedules");
+          setSchedules([]);
         }
       } catch (error) {
         console.error("Error fetching schedules:", error);
+        setSchedules([]);
+      } finally {
+        setLoadingSchedules(false);
       }
     };
 
@@ -86,6 +98,26 @@ export const HomePage = ({ isAuthenticated }: HomePageProps) => {
     releaseDate: "2021",
     trailer: "#"
   };
+
+  const NoMoviesAvailable = () => (
+    <div className="text-center col-span-full py-12">
+      <VideoOff className="mx-auto h-12 w-12 text-muted-foreground" />
+      <h3 className="mt-4 text-lg font-semibold text-foreground">No Movies Found</h3>
+      <p className="mt-1 text-sm text-muted-foreground">
+        There are currently no movies available in this category. Please check back later.
+      </p>
+    </div>
+  );
+
+  const NoSchedulesAvailable = () => (
+    <div className="text-center bg-card/50 border border-border/50 rounded-lg p-8">
+      <Calendar className="mx-auto h-12 w-12 text-muted-foreground" />
+      <h3 className="mt-4 text-lg font-semibold text-foreground">No Showtime Schedules</h3>
+      <p className="mt-1 text-sm text-muted-foreground">
+        There are no showtimes available at the moment. Please check again soon.
+      </p>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-cinema">
@@ -169,19 +201,25 @@ export const HomePage = ({ isAuthenticated }: HomePageProps) => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {movies.map((movie) => (
-              <MovieCard
-                key={movie.id}
-                movie={{
-                  ...movie,
-                  image: movie.moviePosterUrl,
-                  genre: movie.genres.map((g: any) => g.name).join(', '),
-                  ageRating: movie.rating
-                }}
-                onBookTicket={handleBookTicket}
-                onViewDetails={(id) => navigate(`/movies/${id}`)}
-              />
-            ))}
+            {loadingMovies ? (
+              <p>Loading movies...</p>
+            ) : movies.length > 0 ? (
+              movies.map((movie) => (
+                <MovieCard
+                  key={movie.id}
+                  movie={{
+                    ...movie,
+                    image: movie.moviePosterUrl,
+                    genre: movie.genres.map((g: any) => g.name).join(', '),
+                    ageRating: movie.rating
+                  }}
+                  onBookTicket={handleBookTicket}
+                  onViewDetails={(id) => navigate(`/movies/${id}`)}
+                />
+              ))
+            ) : (
+              <NoMoviesAvailable />
+            )}
           </div>
         </section>
 
@@ -189,30 +227,36 @@ export const HomePage = ({ isAuthenticated }: HomePageProps) => {
         <section className="space-y-6">
           <h2 className="text-2xl font-bold text-foreground">Showtime Schedules</h2>
           <div className="space-y-4">
-          {schedules.map((schedule, index) =>
-              schedule.theaters.map((theater: any, theaterIndex: number) => (
-                <div key={`${index}-${theaterIndex}`} className="bg-card/50 border border-border/50 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold text-foreground">{theater.theater.name}</h3>
-                      <p className="text-sm text-muted-foreground">{schedule.movie.title}</p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {theater.showtimes.map((showtime: any, timeIndex: number) => (
-                        <Button
-                          key={timeIndex}
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleBookTicket(schedule.movie.id)}
-                        >
-                          {formatTime(showtime.showtimeTime)}
-                        </Button>
-                      ))}
+          {loadingSchedules ? (
+            <p>Loading schedules...</p>
+          ) : schedules.length > 0 ? (
+            schedules.map((schedule, index) =>
+                schedule.theaters.map((theater: any, theaterIndex: number) => (
+                  <div key={`${index}-${theaterIndex}`} className="bg-card/50 border border-border/50 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-semibold text-foreground">{theater.theater.name}</h3>
+                        <p className="text-sm text-muted-foreground">{schedule.movie.title}</p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {theater.showtimes.map((showtime: any, timeIndex: number) => (
+                          <Button
+                            key={timeIndex}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleBookTicket(schedule.movie.id)}
+                          >
+                            {formatTime(showtime.showtimeTime)}
+                          </Button>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
-            )}
+                ))
+              )
+          ) : (
+            <NoSchedulesAvailable />
+          )}
           </div>
         </section>
       </div>
