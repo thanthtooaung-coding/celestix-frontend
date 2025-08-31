@@ -90,8 +90,13 @@ export const RegisterForm = ({ onSwitchToLogin, onSuccess }: RegisterFormProps) 
         }),
       });
 
-      if (response.ok) {
-        onSuccess?.();
+      if (response.ok) {        
+        if (response.status === 201) {
+          if (onSuccess) {
+            onSuccess();
+          }
+          onSwitchToLogin();
+        }
       } else {
         const errorData = await response.json();
         setErrors({ ...errors, email: errorData.message || "Failed to register" });
