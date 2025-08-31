@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { MovieCard } from "@/components/movies/MovieCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +8,6 @@ import { Search } from "lucide-react";
 import { fetchApi } from "@/lib/api";
 
 interface DiscoverPageProps {
-  onPageChange: (page: string, movieId?: string) => void;
   isAuthenticated: boolean;
 }
 
@@ -29,13 +29,15 @@ interface Genre {
   name: string;
 }
 
-export const DiscoverPage = ({ onPageChange, isAuthenticated }: DiscoverPageProps) => {
+export const DiscoverPage = ({ isAuthenticated }: DiscoverPageProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [movies, setMovies] = useState<Movie[]>([]);
   const [genres, setGenres] = useState<Genre[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -64,13 +66,13 @@ export const DiscoverPage = ({ onPageChange, isAuthenticated }: DiscoverPageProp
           duration: movie.duration,
           rating: movie.popularityRating,
           genre: movie.genres.map((g: any) => g.name).join(', '),
-          releaseDate: new Date(movie.releaseDate).toLocaleDateString('en-US', {
+          releaseDate: new Date(movie.releaseDate).toLocaleString('en-US', {
             weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
           }),
           ageRating: movie.rating
         }));
 
-        setMovies(moviesData);        
+        setMovies(moviesData);
         setGenres(genresApiResponse.data);
 
       } catch (err) {
@@ -91,6 +93,14 @@ export const DiscoverPage = ({ onPageChange, isAuthenticated }: DiscoverPageProp
         : [...prev, genre]
     );
   };
+
+    const handleBookTicket = (movieId: string) => {
+        if (isAuthenticated) {
+            navigate(`/booking/${movieId}`);
+        } else {
+            navigate("/login");
+        }
+    };
 
   const filteredMovies = movies.filter(movie => {
     const matchesSearch = movie.title.toLowerCase().includes(searchQuery.toLowerCase());
@@ -189,7 +199,7 @@ export const DiscoverPage = ({ onPageChange, isAuthenticated }: DiscoverPageProp
                       </Button>
                       <Button
                         className="bg-gradient-accent hover:shadow-glow"
-                        onClick={() => onPageChange("booking", movies[0].id)}
+                        onClick={() => handleBookTicket(movies[0].id)}
                       >
                         BOOK TICKET
                       </Button>
@@ -208,8 +218,8 @@ export const DiscoverPage = ({ onPageChange, isAuthenticated }: DiscoverPageProp
                 <MovieCard
                   key={movie.id}
                   movie={movie}
-                  onBookTicket={(id) => onPageChange("booking", id)}
-                  onViewDetails={(id) => onPageChange("movies", id)}
+                  onBookTicket={handleBookTicket}
+                  onViewDetails={(id) => navigate(`/movies/${id}`)}
                 />
               ))}
             </div>
