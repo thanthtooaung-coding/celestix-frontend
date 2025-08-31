@@ -18,6 +18,7 @@ interface Movie {
   director: string;
   movieCast: string;
   trailerUrl: string;
+  status: string;
 }
 
 export const MovieDetailsPage = () => {
@@ -114,6 +115,7 @@ export const MovieDetailsPage = () => {
                 <Button
                   className="bg-gradient-accent hover:shadow-glow"
                   onClick={() => navigate(`/booking/${movie.id}`)}
+                  disabled={movie.status === "Coming Soon"}
                 >
                   Book Tickets
                 </Button>

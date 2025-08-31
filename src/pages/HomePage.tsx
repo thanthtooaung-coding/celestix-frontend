@@ -14,6 +14,7 @@ export const HomePage = ({ isAuthenticated }: HomePageProps) => {
   const [selectedCategory, setSelectedCategory] = useState("Now Showing");
   const navigate = useNavigate();
   const [movies, setMovies] = useState<any[]>([]);
+  const [featuredMovie, setFeaturedMovie] = useState<any>(null);
   const [schedules, setSchedules] = useState<any[]>([]);
   const [loadingMovies, setLoadingMovies] = useState(true);
   const [loadingSchedules, setLoadingSchedules] = useState(true);
@@ -61,7 +62,24 @@ export const HomePage = ({ isAuthenticated }: HomePageProps) => {
       }
     };
 
+    const fetchFeaturedMovie = async () => {
+        try {
+            const response = await fetchApi('/public/movies/popular');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.data && data.data.length > 0) {
+                    setFeaturedMovie(data.data[0]);
+                }
+            } else {
+                console.error("Failed to fetch featured movie");
+            }
+        } catch (error) {
+            console.error("Error fetching featured movie:", error);
+        }
+    };
+
     fetchSchedules();
+    fetchFeaturedMovie();
   }, []);
 
 
@@ -87,18 +105,6 @@ export const HomePage = ({ isAuthenticated }: HomePageProps) => {
     { id: "Coming Soon", label: "Coming Soon" }
   ];
 
-  const featuredMovie = {
-    id: "1",
-    title: "Black Widow",
-    description: "Natasha Romanoff confronts the darker parts of her ledger when a dangerous conspiracy with ties to her past arises.",
-    image: "/lovable-uploads/movie-hero.jpg",
-    duration: "134 minutes",
-    rating: 8.5,
-    genres: ["Action", "Adventure", "Sci-Fi"],
-    releaseDate: "2021",
-    trailer: "#"
-  };
-
   const NoMoviesAvailable = () => (
     <div className="text-center col-span-full py-12">
       <VideoOff className="mx-auto h-12 w-12 text-muted-foreground" />
@@ -122,10 +128,11 @@ export const HomePage = ({ isAuthenticated }: HomePageProps) => {
   return (
     <div className="min-h-screen bg-gradient-cinema">
       {/* Hero Section */}
-      <section className="relative h-[70vh] overflow-hidden">
+      {featuredMovie && (
+        <section className="relative h-[70vh] overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="/lovable-uploads/hero-bg.jpg"
+            src={featuredMovie.moviePosterUrl || "/lovable-uploads/hero-bg.jpg"}
             alt="Hero Background"
             className="w-full h-full object-cover"
           />
@@ -136,8 +143,8 @@ export const HomePage = ({ isAuthenticated }: HomePageProps) => {
           <div className="max-w-2xl space-y-6">
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
-                {featuredMovie.genres.map((genre) => (
-                  <Badge key={genre} variant="secondary">{genre}</Badge>
+                {featuredMovie.genres.map((genre: any) => (
+                  <Badge key={genre.name} variant="secondary">{genre.name}</Badge>
                 ))}
               </div>
               <h1 className="text-5xl font-bold text-foreground">{featuredMovie.title}</h1>
@@ -154,7 +161,7 @@ export const HomePage = ({ isAuthenticated }: HomePageProps) => {
               </div>
               <div className="flex items-center space-x-2">
                 <Calendar className="w-4 h-4" />
-                <span>{featuredMovie.releaseDate}</span>
+                <span>{new Date(featuredMovie.releaseDate).getFullYear()}</span>
               </div>
             </div>
 
@@ -162,7 +169,7 @@ export const HomePage = ({ isAuthenticated }: HomePageProps) => {
               <Button
                 size="lg"
                 className="bg-gradient-accent hover:shadow-glow"
-                onClick={() => window.open('https://www.youtube.com/watch?v=nt86yKkdeLU', '_blank')}
+                onClick={() => window.open(featuredMovie.trailerUrl, '_blank')}
               >
                 <Play className="w-5 h-5 mr-2" />
                 🎬 Watch Trailer
@@ -178,6 +185,8 @@ export const HomePage = ({ isAuthenticated }: HomePageProps) => {
           </div>
         </div>
       </section>
+      )}
+
 
       <div className="container mx-auto px-4 py-12 space-y-12">
         {/* Movies Section */}
@@ -211,7 +220,8 @@ export const HomePage = ({ isAuthenticated }: HomePageProps) => {
                     ...movie,
                     image: movie.moviePosterUrl,
                     genre: movie.genres.map((g: any) => g.name).join(', '),
-                    ageRating: movie.rating
+                    ageRating: movie.rating,
+                    status: movie.status
                   }}
                   onBookTicket={handleBookTicket}
                   onViewDetails={(id) => navigate(`/movies/${id}`)}
