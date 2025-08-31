@@ -36,6 +36,7 @@ import { TheatersTable } from "./components/admin/TheatersTable";
 import { BookingsTable } from "./components/admin/BookingsTable";
 import { DashboardStats } from "./components/dashboard/DashboardStats";
 import React from "react";
+import { AdminsTable } from "./components/admin/AdminsTable";
 
 const queryClient = new QueryClient();
 
@@ -125,6 +126,7 @@ const App = () => (
                 <Route path="theaters" element={<TheatersTable />} />
                 <Route path="theaters/:theaterId/pricing" element={<TheaterSeatPricingPage />} />
                 <Route path="bookings" element={<BookingsTable />} />
+                <Route path="admins" element={<AdminsTable />} />
                 <Route path="admins/add" element={<AddAdminPage />} />
           </Route>
           

@@ -3,32 +3,50 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Upload } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { fetchWithAuth } from "@/lib/api";
 
 export const AddAdminPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const [adminData, setAdminData] = useState({
-    firstName: "",
-    lastName: "",
+    name: "",
     email: "",
-    phone: "",
-    role: "admin",
-    department: "",
-    permissions: "full"
+    password: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Admin Added",
-      description: "New admin has been successfully added to the system.",
-    });
-    navigate(-1);
+    try {
+      const response = await fetchWithAuth("/admins", {
+        method: 'POST',
+        body: adminData,
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Admin Added",
+          description: "New admin has been successfully added to the system.",
+        });
+        navigate("/admin/admins");
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "Error",
+          description: errorData.message || "Failed to add admin.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An error occurred while adding the admin.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -63,21 +81,11 @@ export const AddAdminPage = () => {
               {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName" className="text-foreground">First Name</Label>
+                  <Label htmlFor="name" className="text-foreground">Full Name</Label>
                   <Input
-                    id="firstName"
-                    value={adminData.firstName}
-                    onChange={(e) => handleInputChange("firstName", e.target.value)}
-                    className="bg-secondary/50 border-border/50 text-foreground"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName" className="text-foreground">Last Name</Label>
-                  <Input
-                    id="lastName"
-                    value={adminData.lastName}
-                    onChange={(e) => handleInputChange("lastName", e.target.value)}
+                    id="name"
+                    value={adminData.name}
+                    onChange={(e) => handleInputChange("name", e.target.value)}
                     className="bg-secondary/50 border-border/50 text-foreground"
                     required
                   />
@@ -94,70 +102,15 @@ export const AddAdminPage = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-foreground">Phone</Label>
+                  <Label htmlFor="password" className="text-foreground">Password</Label>
                   <Input
-                    id="phone"
-                    value={adminData.phone}
-                    onChange={(e) => handleInputChange("phone", e.target.value)}
+                    id="password"
+                    type="password"
+                    value={adminData.password}
+                    onChange={(e) => handleInputChange("password", e.target.value)}
                     className="bg-secondary/50 border-border/50 text-foreground"
+                    required
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="role" className="text-foreground">Role</Label>
-                  <Select value={adminData.role} onValueChange={(value) => handleInputChange("role", value)}>
-                    <SelectTrigger className="bg-secondary/50 border-border/50 text-foreground">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="super-admin">Super Admin</SelectItem>
-                      <SelectItem value="manager">Manager</SelectItem>
-                      <SelectItem value="moderator">Moderator</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="department" className="text-foreground">Department</Label>
-                  <Select value={adminData.department} onValueChange={(value) => handleInputChange("department", value)}>
-                    <SelectTrigger className="bg-secondary/50 border-border/50 text-foreground">
-                      <SelectValue placeholder="Select department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="operations">Operations</SelectItem>
-                      <SelectItem value="customer-service">Customer Service</SelectItem>
-                      <SelectItem value="technical">Technical</SelectItem>
-                      <SelectItem value="marketing">Marketing</SelectItem>
-                      <SelectItem value="finance">Finance</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Permissions */}
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="permissions" className="text-foreground">Permissions Level</Label>
-                  <Select value={adminData.permissions} onValueChange={(value) => handleInputChange("permissions", value)}>
-                    <SelectTrigger className="bg-secondary/50 border-border/50 text-foreground">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="full">Full Access</SelectItem>
-                      <SelectItem value="limited">Limited Access</SelectItem>
-                      <SelectItem value="read-only">Read Only</SelectItem>
-                      <SelectItem value="custom">Custom Permissions</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Profile Picture Upload */}
-              <div className="space-y-4">
-                <Label className="text-foreground">Profile Picture</Label>
-                <div className="border-2 border-dashed border-border/50 rounded-lg p-8 text-center hover:border-border transition-colors">
-                  <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground mb-2">Drop profile picture here, or browse</p>
-                  <p className="text-sm text-muted-foreground">Supports: JPG, PNG (Max 2MB)</p>
                 </div>
               </div>
 

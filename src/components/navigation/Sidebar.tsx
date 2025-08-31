@@ -12,6 +12,7 @@ import {
   ClipboardList,
   Tag,
   LogOut,
+  Shield,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -27,6 +28,7 @@ const menuItems = [
   { id: "showtimes", label: "Showtimes", icon: Calendar, path: "/admin/showtimes" },
   { id: "theaters", label: "Theaters", icon: Building, path: "/admin/theaters" },
   { id: "bookings", label: "Bookings", icon: Newspaper, path: "/admin/bookings" },
+  { id: "admins", label: "Admins", icon: Shield, path: "/admin/admins" },
 ];
 
 const bottomMenuItems = [{ id: "logout", label: "Logout", icon: LogOut }];
