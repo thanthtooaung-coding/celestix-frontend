@@ -8,34 +8,8 @@ import { fetchWithAuth } from "@/lib/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export const ProfilePage = () => {
-  const [bookings, setBookings] = useState([
-    {
-      id: "1",
-      movie: "The Suicide Squad",
-      date: "2024-01-15",
-      time: "18:30",
-      seats: ["D5", "D6", "D7"],
-      cinema: "CGV Hung Vuong",
-      room: "Room 2D 1",
-      price: 30,
-      status: "upcoming",
-      foodItems: [
-        { name: "FA Combo", quantity: 2, price: 10 }
-      ]
-    },
-    {
-      id: "2",
-      movie: "Black Widow",
-      date: "2024-01-10",
-      time: "20:00",
-      seats: ["E8", "E9"],
-      cinema: "CGV Landmark",
-      room: "Room IMAX",
-      price: 25,
-      status: "success",
-      foodItems: []
-    }
-  ]);
+  const [upcomingBookings, setUpcomingBookings] = useState([]);
+  const [completedBookings, setCompletedBookings] = useState([]);
   const [user, setUser] = useState({ name: "", email: "", profileUrl: "" });
 
   useEffect(() => {
@@ -50,12 +24,25 @@ export const ProfilePage = () => {
         console.error("Failed to fetch user data", error);
       }
     };
+    const fetchBookings = async () => {
+      try {
+        const response = await fetchWithAuth("/auth/me/bookings");
+        if (response.ok) {
+          const data = await response.json();
+          setUpcomingBookings(data.data.upcoming);
+          setCompletedBookings(data.data.completed);
+        }
+      } catch (error) {
+        console.error("Failed to fetch bookings", error);
+      }
+    };
     fetchUser();
+    fetchBookings();
   }, []);
 
 
-  const handleCancelBooking = (bookingId: string) => {
-    setBookings(bookings.filter(booking => booking.id !== bookingId));
+  const handleCancelBooking = (bookingId) => {
+    // Implement booking cancellation logic here
   };
 
   return (
@@ -80,19 +67,19 @@ export const ProfilePage = () => {
             <TabsContent value="bookings" className="mt-6">
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold text-white mb-4">Upcoming Bookings</h2>
-                {bookings.filter(booking => booking.status === "upcoming").map((booking) => (
+                {upcomingBookings.map((booking) => (
                   <Card key={booking.id} className="bg-card/50 border-border/50 p-6">
                     <div className="flex justify-between items-start mb-4">
                       <div>
-                        <h3 className="text-lg font-semibold text-white">{booking.movie}</h3>
+                        <h3 className="text-lg font-semibold text-white">{booking.movieTitle}</h3>
                         <div className="flex items-center gap-4 text-muted-foreground mt-2">
                           <div className="flex items-center gap-1">
                             <Calendar className="w-4 h-4" />
-                            <span>{booking.date} at {booking.time}</span>
+                            <span>{booking.showtimeDate} at {booking.showtimeTime}</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <MapPin className="w-4 h-4" />
-                            <span>{booking.cinema} - {booking.room}</span>
+                            <span>{booking.theaterName}</span>
                           </div>
                         </div>
                       </div>
@@ -113,7 +100,7 @@ export const ProfilePage = () => {
                       <div>
                         <p className="text-sm text-muted-foreground">Seats</p>
                         <div className="flex gap-1 mt-1">
-                          {booking.seats.map((seat) => (
+                          {booking.seats.split(',').map((seat) => (
                             <Badge key={seat} variant="outline" className="text-white border-white/20">
                               {seat}
                             </Badge>
@@ -123,15 +110,7 @@ export const ProfilePage = () => {
                       <div>
                         <p className="text-sm text-muted-foreground">Food & Beverage</p>
                         <div className="mt-1">
-                          {booking.foodItems.length > 0 ? (
-                            booking.foodItems.map((item, index) => (
-                              <div key={index} className="text-sm text-white">
-                                {item.quantity}x {item.name} - ${item.price}
-                              </div>
-                            ))
-                          ) : (
-                            <span className="text-sm text-muted-foreground">No food items</span>
-                          )}
+                          <span className="text-sm text-muted-foreground">No food items</span>
                         </div>
                       </div>
                     </div>
@@ -139,7 +118,7 @@ export const ProfilePage = () => {
                     <div className="mt-4 pt-4 border-t border-border/50">
                       <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Total Amount</span>
-                        <span className="text-lg font-semibold text-accent">${booking.price}</span>
+                        <span className="text-lg font-semibold text-accent">${booking.totalAmount}</span>
                       </div>
                     </div>
                   </Card>
@@ -150,31 +129,31 @@ export const ProfilePage = () => {
             <TabsContent value="history" className="mt-6">
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold text-white mb-4">Booking History</h2>
-                {bookings.filter(booking => booking.status === "success").map((booking) => (
+                {completedBookings.map((booking) => (
                   <Card key={booking.id} className="bg-card/50 border-border/50 p-6 opacity-80">
                     <div className="mb-4">
-                      <h3 className="text-lg font-semibold text-white">{booking.movie}</h3>
+                      <h3 className="text-lg font-semibold text-white">{booking.movieTitle}</h3>
                       <div className="flex items-center gap-4 text-muted-foreground mt-2">
                         <div className="flex items-center gap-1">
                           <Calendar className="w-4 h-4" />
-                          <span>{booking.date} at {booking.time}</span>
+                          <span>{booking.showtimeDate} at {booking.showtimeTime}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <MapPin className="w-4 h-4" />
-                          <span>{booking.cinema} - {booking.room}</span>
+                          <span>{booking.theaterName}</span>
                         </div>
                       </div>
                     </div>
 
                     <div className="flex justify-between items-center">
                       <div className="flex gap-1">
-                        {booking.seats.map((seat) => (
+                        {booking.seats.split(',').map((seat) => (
                           <Badge key={seat} variant="outline" className="text-white border-white/20">
                             {seat}
                           </Badge>
                         ))}
                       </div>
-                      <Badge className="bg-green-600 text-white">Success</Badge>
+                      <Badge className="bg-green-600 text-white">Completed</Badge>
                     </div>
                   </Card>
                 ))}
