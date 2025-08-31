@@ -124,15 +124,7 @@ export const MovieDetailsPage = () => {
                 >
                   <Play className="w-4 h-4 mr-2" />
                   Watch Trailer
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-white hover:bg-white/10"
-                  onClick={() => setIsLiked(!isLiked)}
-                >
-                  <Heart className={`w-5 h-5 ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
-                </Button>
+                </Button>                
               </div>
             </div>
 

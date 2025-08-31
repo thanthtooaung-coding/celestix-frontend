@@ -38,7 +38,7 @@ export const MovieCard = ({ movie, onBookTicket, onViewDetails }: MovieCardProps
           alt={movie.title}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
-        
+
         {/* Overlay on hover */}
         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
           <div className="space-y-2 w-full px-4">
@@ -69,10 +69,10 @@ export const MovieCard = ({ movie, onBookTicket, onViewDetails }: MovieCardProps
         </div>
 
         {/* Age Rating Badge */}
-        <Badge 
+        <Badge
           className="absolute top-2 left-2 bg-primary text-primary-foreground"
         >
-          {movie.rating}
+          {movie.ageRating}
         </Badge>
 
         {/* Rating */}
@@ -87,13 +87,13 @@ export const MovieCard = ({ movie, onBookTicket, onViewDetails }: MovieCardProps
         <h3 className="font-bold text-foreground group-hover:text-primary transition-colors duration-200 line-clamp-1">
           {movie.title}
         </h3>
-        
+
         <div className="space-y-2">
           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
             <Clock className="w-4 h-4" />
             <span>{movie.duration}</span>
           </div>
-          
+
           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
             <Calendar className="w-4 h-4" />
             <span>{movie.releaseDate}</span>
