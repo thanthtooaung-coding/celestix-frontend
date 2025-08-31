@@ -10,7 +10,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft } from "lucide-react";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+  } from "@/components/ui/tooltip";
+import { ArrowLeft, HelpCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchWithAuth } from "@/lib/api";
 
@@ -22,14 +28,13 @@ export const AddShowtimePage = () => {
     theaterId: "",
     showtimeDate: "",
     showtimeTime: "",
-    seatsAvailable: "",
-    status: "Available",
   });
   const [templateData, setTemplateData] = useState({
     movies: [],
     theaters: [],
     statusOptions: [],
   });
+  const [schedulerMinutes, setSchedulerMinutes] = useState(10);
 
   // Effect to fetch initial template data for dropdowns
   useEffect(() => {
@@ -54,17 +59,27 @@ export const AddShowtimePage = () => {
         });
       }
     };
+    const fetchSchedulerMinutes = async () => {
+        try {
+          const response = await fetchWithAuth("/configurations/SHOWTIME_SCHEDULER_MINUTES");
+          if (response.ok) {
+            const data = await response.json();
+            setSchedulerMinutes(parseInt(data.data.value, 10));
+          }
+        } catch (error) {
+            // Fails silently, using the default of 10
+        }
+      };
     fetchTemplateData();
+    fetchSchedulerMinutes();
   }, [toast]);
 
   // Form submission handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Prepare the payload for the API
+    
     const payload = {
-      ...showtimeData,
-      // Ensure seatsAvailable is an integer
-      seatsAvailable: parseInt(showtimeData.seatsAvailable),
+        ...showtimeData
     };
 
     try {
@@ -108,49 +123,12 @@ export const AddShowtimePage = () => {
     const time = e.target.value;
     const [, minutes] = time.split(':').map(Number);
 
-    if (minutes % 10 !== 0) {
-      e.target.setCustomValidity("Time must be in 10-minute increments.");
+    if (minutes % schedulerMinutes !== 0) {
+      e.target.setCustomValidity(`Time must be in ${schedulerMinutes}-minute increments.`);
     } else {
       e.target.setCustomValidity("");
     }
     handleInputChange("showtimeTime", time);
-  };
-
-  // Specific handler for theater selection change
-  const handleTheaterChange = async (theaterId: string) => {
-    // First, update the theaterId in the state
-    handleInputChange("theaterId", theaterId);
-
-    // If a theater is selected, fetch its details to get the capacity
-    if (theaterId) {
-      try {
-        const response = await fetchWithAuth(`/theaters/${theaterId}`);
-        if (response.ok) {
-          const result = await response.json();
-          const capacity = result.data.seatConfiguration.row * result.data.seatConfiguration.column;
-          // Update the seatsAvailable field with the fetched capacity
-          handleInputChange("seatsAvailable", capacity.toString());
-        } else {
-          toast({
-            title: "Error",
-            description: "Failed to fetch theater capacity.",
-            variant: "destructive",
-          });
-          // Clear seats available if the fetch fails
-          handleInputChange("seatsAvailable", "");
-        }
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "An error occurred while fetching theater details.",
-          variant: "destructive",
-        });
-        handleInputChange("seatsAvailable", "");
-      }
-    } else {
-      // If no theater is selected (e.g., cleared), clear the seats available input
-      handleInputChange("seatsAvailable", "");
-    }
   };
 
   return (
@@ -199,7 +177,7 @@ export const AddShowtimePage = () => {
                 </label>
                 <Select
                   value={showtimeData.theaterId}
-                  onValueChange={handleTheaterChange} // Use the new specific handler
+                  onValueChange={(value) => handleInputChange("theaterId", value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select theater" />
@@ -232,56 +210,34 @@ export const AddShowtimePage = () => {
 
               {/* Time */}
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Time *
-                </label>
+                 <div className="flex items-center mb-2">
+                    <label className="block text-sm font-medium text-foreground">
+                    Time *
+                    </label>
+                    <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                        <HelpCircle className="w-4 h-4 text-muted-foreground ml-2 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                        <p>
+                            Showtime intervals are based on the scheduler setting.
+                            <br />
+                            Current interval: <strong>Every {schedulerMinutes} minutes</strong>.
+                        </p>
+                        </TooltipContent>
+                    </Tooltip>
+                    </TooltipProvider>
+                </div>
                 <Input
                   type="time"
                   value={showtimeData.showtimeTime}
                   onChange={handleTimeChange}
+                  step={schedulerMinutes * 60}
                   required
                 />
               </div>
 
-              {/* Seats Available */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Seats Available *
-                </label>
-                <Input
-                  type="number"
-                  value={showtimeData.seatsAvailable}
-                  onChange={(e) =>
-                    handleInputChange("seatsAvailable", e.target.value)
-                  }
-                  placeholder="Auto-filled from theater"
-                  required
-                  readOnly // Prevents manual editing
-                  className="bg-muted/50" // Style to indicate it's read-only
-                />
-              </div>
-
-              {/* Status */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Status
-                </label>
-                <Select
-                  value={showtimeData.status}
-                  onValueChange={(value) => handleInputChange("status", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {templateData.statusOptions.map((status: any) => (
-                      <SelectItem key={status.id} value={status.name}>
-                        {status.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
 
             {/* Action Buttons */}

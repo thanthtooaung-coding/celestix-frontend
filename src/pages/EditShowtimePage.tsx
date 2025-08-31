@@ -16,8 +16,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+  } from "@/components/ui/tooltip";
+import { ArrowLeft, HelpCircle } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 import { fetchWithAuth } from "@/lib/api";
 
 export const EditShowtimePage = () => {
@@ -39,12 +45,18 @@ export const EditShowtimePage = () => {
     statusOptions: [],
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [schedulerMinutes, setSchedulerMinutes] = useState(10);
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        // First, fetch the template data for the dropdowns
+        const schedulerResponse = await fetchWithAuth("/configurations/SHOWTIME_SCHEDULER_MINUTES");
+        if(schedulerResponse.ok) {
+          const schedulerData = await schedulerResponse.json();
+          setSchedulerMinutes(parseInt(schedulerData.data.value, 10));
+        }
+
         const templateResponse = await fetchWithAuth("/showtimes/template");
         if (!templateResponse.ok) {
           throw new Error("Failed to fetch template data.");
@@ -52,7 +64,6 @@ export const EditShowtimePage = () => {
         const templateJson = await templateResponse.json();
         setTemplateData(templateJson.data);
 
-        // THEN, fetch the specific showtime data
         const showtimeResponse = await fetchWithAuth(`/showtimes/${id}`);
         if (!showtimeResponse.ok) {
           throw new Error("Failed to fetch showtime data.");
@@ -69,7 +80,7 @@ export const EditShowtimePage = () => {
           status: showtime.status,
         });
 
-      } catch (error) {
+      } catch (error: any) {
         toast({
           title: "Error",
           description: error.message || "An error occurred while fetching data.",
@@ -86,12 +97,11 @@ export const EditShowtimePage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate that minutes are in 10-minute increments
     const [, minutes] = showtimeData.showtimeTime.split(":").map(Number);
-    if (minutes % 10 !== 0) {
+    if (minutes % schedulerMinutes !== 0) {
       toast({
         title: "Invalid Time",
-        description: "Showtime must be in 10-minute increments (e.g., 10:00, 10:10, 10:20).",
+        description: `Showtime must be in ${schedulerMinutes}-minute increments.`,
         variant: "destructive",
       });
       return;
@@ -99,8 +109,7 @@ export const EditShowtimePage = () => {
 
     const payload = {
       ...showtimeData,
-      showtimeTime: `${showtimeData.showtimeTime}:00`, // Ensure seconds are included for backend
-      seatsAvailable: parseInt(showtimeData.seatsAvailable),
+      showtimeTime: `${showtimeData.showtimeTime}:00`,
     };
 
     try {
@@ -153,7 +162,6 @@ export const EditShowtimePage = () => {
   return (
     <div className="min-h-screen bg-gradient-primary p-6">
       <div className="max-w-2xl mx-auto">
-        {/* Header */}
         <div className="flex items-center space-x-4 mb-6">
           <Button
             variant="ghost"
@@ -174,7 +182,6 @@ export const EditShowtimePage = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="movie" className="text-foreground">
@@ -234,13 +241,29 @@ export const EditShowtimePage = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="time" className="text-foreground">
-                    Time
-                  </Label>
+                    <div className="flex items-center">
+                        <Label htmlFor="time" className="text-foreground">
+                            Time
+                        </Label>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <HelpCircle className="w-4 h-4 text-muted-foreground ml-2 cursor-help" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>
+                                        Showtime intervals are based on the scheduler setting.
+                                        <br />
+                                        Current interval: <strong>Every {schedulerMinutes} minutes</strong>.
+                                    </p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </div>
                   <Input
                     id="time"
                     type="time"
-                    step="600" // 10 minutes in seconds
+                    step={schedulerMinutes * 60}
                     value={showtimeData.showtimeTime}
                     onChange={(e) =>
                       handleInputChange("showtimeTime", e.target.value)
@@ -282,7 +305,6 @@ export const EditShowtimePage = () => {
                 </div>
               </div>
 
-              {/* Actions */}
               <div className="flex justify-end space-x-4 pt-6">
                 <Button
                   type="button"
