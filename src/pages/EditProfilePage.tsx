@@ -1,27 +1,56 @@
-import { useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowLeft, Upload, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { fetchWithAuth } from "@/lib/api";
 
 export const EditProfilePage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [profileData, setProfileData] = useState({
-    name: "John Doe",
-    email: "john.doe@example.com",
-    phone: "+1 (555) 123-4567",
-    dateOfBirth: "1990-05-15",
-    address: "123 Main Street, New York, NY 10001",
-    bio: "Movie enthusiast and frequent theater-goer.",
+    name: "",
+    email: "",
     profileImage: ""
   });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await fetchWithAuth("/auth/me");
+        if (response.ok) {
+          const userData = await response.json();
+          setProfileData(prev => ({
+            ...prev,
+            name: userData.data.name,
+            email: userData.data.email,
+            profileImage: userData.data.profileUrl
+          }));
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to fetch user data.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "An error occurred while fetching your profile.",
+          variant: "destructive",
+        });
+      }
+    };
+    fetchUserData();
+  }, [toast]);
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -31,13 +60,71 @@ export const EditProfilePage = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileData(prev => ({
+          ...prev,
+          profileImage: reader.result as string
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Profile Updated",
-      description: "Your profile information has been successfully updated.",
-    });
-    navigate(-1); // Go back to previous page
+    try {
+        if(selectedFile){
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            const uploadResponse = await fetchWithAuth("/auth/me/profile-picture", {
+                method: 'POST',
+                body: formData,
+                useJson: false
+            });
+
+            if(!uploadResponse.ok){
+                toast({
+                    title: "Error",
+                    description: "Failed to upload profile picture.",
+                    variant: "destructive",
+                });
+                return;
+            }
+        }
+
+
+      const response = await fetchWithAuth("/auth/me", {
+        method: 'PUT',
+        body: { name: profileData.name }
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Profile Updated",
+          description: "Your profile information has been successfully updated.",
+        });
+        navigate(-1);
+      } else {
+        const errorData = await response.json();
+        toast({
+            title: "Error",
+            description: errorData.message || "Failed to update profile.",
+            variant: "destructive",
+        });
+      }
+    } catch (error) {
+        toast({
+            title: "Error",
+            description: "An error occurred while updating your profile.",
+            variant: "destructive",
+        });
+    }
   };
 
   return (
@@ -71,7 +158,14 @@ export const EditProfilePage = () => {
                     <User className="w-12 h-12" />
                   </AvatarFallback>
                 </Avatar>
-                <Button type="button" variant="outline" className="text-sm">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  className="hidden"
+                  accept="image/*"
+                />
+                <Button type="button" variant="outline" className="text-sm" onClick={() => fileInputRef.current?.click()}>
                   <Upload className="w-4 h-4 mr-2" />
                   Change Photo
                 </Button>
@@ -97,56 +191,10 @@ export const EditProfilePage = () => {
                     name="email"
                     type="email"
                     value={profileData.email}
-                    onChange={handleInputChange}
+                    readOnly
                     className="bg-input border-border text-foreground"
                   />
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    name="phone"
-                    value={profileData.phone}
-                    onChange={handleInputChange}
-                    className="bg-input border-border text-foreground"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                  <Input
-                    id="dateOfBirth"
-                    name="dateOfBirth"
-                    type="date"
-                    value={profileData.dateOfBirth}
-                    onChange={handleInputChange}
-                    className="bg-input border-border text-foreground"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
-                <Input
-                  id="address"
-                  name="address"
-                  value={profileData.address}
-                  onChange={handleInputChange}
-                  className="bg-input border-border text-foreground"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="bio">Bio</Label>
-                <Textarea
-                  id="bio"
-                  name="bio"
-                  value={profileData.bio}
-                  onChange={handleInputChange}
-                  className="bg-input border-border text-foreground min-h-[100px]"
-                  placeholder="Tell us about yourself..."
-                />
               </div>
 
               {/* Action Buttons */}

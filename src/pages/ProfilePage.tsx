@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Calendar, MapPin, Edit3, Trash2 } from "lucide-react";
+import { fetchWithAuth } from "@/lib/api";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export const ProfilePage = () => {
   const [bookings, setBookings] = useState([
@@ -30,19 +32,31 @@ export const ProfilePage = () => {
       cinema: "CGV Landmark",
       room: "Room IMAX",
       price: 25,
-      status: "completed",
+      status: "success",
       foodItems: []
     }
   ]);
+  const [user, setUser] = useState({ name: "", email: "", profileUrl: "" });
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await fetchWithAuth("/auth/me");
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user data", error);
+      }
+    };
+    fetchUser();
+  }, []);
+
 
   const handleCancelBooking = (bookingId: string) => {
     setBookings(bookings.filter(booking => booking.id !== bookingId));
   };
-
- // const handleEditBooking = (bookingId: string) => {
-    // This would open an edit modal in a real app
-    //console.log("Edit booking:", bookingId);
-  //};
 
   return (
     <div className="min-h-screen bg-gradient-cinema">
@@ -83,7 +97,7 @@ export const ProfilePage = () => {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        
+
                         <Button
                           variant="destructive"
                           size="sm"
@@ -94,7 +108,7 @@ export const ProfilePage = () => {
                         </Button>
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm text-muted-foreground">Seats</p>
@@ -121,7 +135,7 @@ export const ProfilePage = () => {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="mt-4 pt-4 border-t border-border/50">
                       <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Total Amount</span>
@@ -136,7 +150,7 @@ export const ProfilePage = () => {
             <TabsContent value="history" className="mt-6">
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold text-white mb-4">Booking History</h2>
-                {bookings.filter(booking => booking.status === "completed").map((booking) => (
+                {bookings.filter(booking => booking.status === "success").map((booking) => (
                   <Card key={booking.id} className="bg-card/50 border-border/50 p-6 opacity-80">
                     <div className="mb-4">
                       <h3 className="text-lg font-semibold text-white">{booking.movie}</h3>
@@ -151,7 +165,7 @@ export const ProfilePage = () => {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="flex justify-between items-center">
                       <div className="flex gap-1">
                         {booking.seats.map((seat) => (
@@ -160,7 +174,7 @@ export const ProfilePage = () => {
                           </Badge>
                         ))}
                       </div>
-                      <Badge className="bg-green-600 text-white">Completed</Badge>
+                      <Badge className="bg-green-600 text-white">Success</Badge>
                     </div>
                   </Card>
                 ))}
@@ -170,21 +184,24 @@ export const ProfilePage = () => {
             <TabsContent value="profile" className="mt-6">
               <Card className="bg-card/50 border-border/50 p-6">
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
-                    <User className="w-8 h-8 text-primary" />
-                  </div>
+                  <Avatar className="w-16 h-16">
+                    <AvatarImage src={user.profileUrl} />
+                    <AvatarFallback>
+                      <User className="w-8 h-8 text-primary" />
+                    </AvatarFallback>
+                  </Avatar>
                   <div>
-                    <h2 className="text-xl font-semibold text-white">John Doe</h2>
-                    <p className="text-muted-foreground">john.doe@example.com</p>
+                    <h2 className="text-xl font-semibold text-white">{user.name}</h2>
+                    <p className="text-muted-foreground">{user.email}</p>
                   </div>
                 </div>
-                
+
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-white mb-2">Name</label>
                     <input
                       type="text"
-                      value="John Doe"
+                      value={user.name}
                       className="w-full px-3 py-2 bg-background/50 border border-border/50 rounded-md text-white"
                       readOnly
                     />
@@ -193,23 +210,14 @@ export const ProfilePage = () => {
                     <label className="block text-sm font-medium text-white mb-2">Email</label>
                     <input
                       type="email"
-                      value="john.doe@example.com"
-                      className="w-full px-3 py-2 bg-background/50 border border-border/50 rounded-md text-white"
-                      readOnly
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-white mb-2">Phone</label>
-                    <input
-                      type="tel"
-                      value="+1 (555) 123-4567"
+                      value={user.email}
                       className="w-full px-3 py-2 bg-background/50 border border-border/50 rounded-md text-white"
                       readOnly
                     />
                   </div>
                 </div>
-                
-                <Button 
+
+                <Button
                   className="mt-6 bg-gradient-accent hover:shadow-glow"
                   onClick={() => window.location.href = '/edit-profile'}
                 >
