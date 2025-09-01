@@ -27,16 +27,23 @@ export const EditFoodPage = () => {
     category: "",
     description: "",
     allergens: "",
-    available: ""
+    available: "",
+    photoUrl: ""
   });
+  const [foodImage, setFoodImage] = useState<File | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-  // Fetch food by ID from backend
   useEffect(() => {
     fetchWithAuth(`/food`)
       .then((res) => res.json())
       .then((data) => {
-        const found = data.find((f) => f.id === Number(id));
-        if (found) setFood(found);
+        const found = data.find((f: any) => f.id === Number(id));
+        if (found) {
+          setFood(found);
+          if (found.photoUrl) {
+            setPreviewImage(found.photoUrl);
+          }
+        }
       })
       .catch((err) => console.error(err));
   }, [id]);
@@ -44,13 +51,57 @@ export const EditFoodPage = () => {
   const handleInputChange = (field: string, value: string) => {
     setFood(prev => ({ ...prev, [field]: value }));
   };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setFoodImage(file);
+      setPreviewImage(URL.createObjectURL(file));
+    }
+  };
     
-    const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    let imageUrl = foodData.photoUrl;
+    if (foodImage) {
+      const formData = new FormData();
+      formData.append("file", foodImage);
+
+      try {
+        const response = await fetchWithAuth("/media", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          imageUrl = result.data.url;
+        } else {
+          toast({
+            title: "Error",
+            description: "Image upload failed.",
+            variant: "destructive",
+          });
+          return;
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "An error occurred during image upload.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     await fetchWithAuth(`/food/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(foodData),
+      body: JSON.stringify({
+        ...foodData,
+        photoUrl: imageUrl
+      }),
     })
       .then((res) => res.json())
       .then(() => navigate("/admin/food"))
@@ -60,7 +111,6 @@ export const EditFoodPage = () => {
   return (
     <div className="min-h-screen bg-gradient-primary p-6">
       <div className="max-w-2xl mx-auto">
-        {/* Header */}
         <div className="flex items-center space-x-4 mb-6">
           <Button
             variant="ghost"
@@ -79,7 +129,6 @@ export const EditFoodPage = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="name" className="text-foreground">Name</Label>
@@ -112,22 +161,7 @@ export const EditFoodPage = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                {/* <div className="space-y-2">
-                  <Label htmlFor="availabile" className="text-foreground">Availability</Label>
-                  <Select value={foodData.available} onValueChange={(value) => handleInputChange("availabile", value)}>
-                    <SelectTrigger className="bg-secondary/50 border-border/50 text-foreground">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Available">Available</SelectItem>
-                      <SelectItem value="Out of Stock">Out of Stock</SelectItem>
-                      <SelectItem value="Discontinued">Discontinued</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div> */}
               </div>
-
-              {/* Additional Information */}
               <div className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="description" className="text-foreground">Description</Label>
@@ -150,18 +184,18 @@ export const EditFoodPage = () => {
                   />
                 </div>
               </div>
-
-              {/* Food Image Upload */}
               <div className="space-y-4">
                 <Label className="text-foreground">Food Image</Label>
                 <div className="border-2 border-dashed border-border/50 rounded-lg p-8 text-center hover:border-border transition-colors">
-                  <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground mb-2">Drop your image here, or browse</p>
-                  <p className="text-sm text-muted-foreground">Supports: JPG, PNG (Max 5MB)</p>
+                  <Input type="file" onChange={handleFileChange} className="hidden" id="food-image-upload" />
+                  <Label htmlFor="food-image-upload" className="cursor-pointer">
+                    <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground mb-2">Drop your image here, or browse</p>
+                    <p className="text-sm text-muted-foreground">Supports: JPG, PNG (Max 5MB)</p>
+                  </Label>
+                  {previewImage && <img src={previewImage} alt="Food preview" className="mt-4 mx-auto h-32" />}
                 </div>
               </div>
-
-              {/* Actions */}
               <div className="flex justify-end space-x-4 pt-6">
                 <Button
                   type="button"

@@ -4,15 +4,6 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ArrowLeft, Upload } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchWithAuth } from "@/lib/api";
@@ -21,6 +12,8 @@ export const AddComboPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [totalPrice, setTotalPrice] = useState(0);
+  const [comboImage, setComboImage] = useState<File | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const [foodData, setFoodData] = useState({
     name: "",
@@ -33,7 +26,6 @@ export const AddComboPage = () => {
     {}
   );
 
-  // Fetch all foods
   useEffect(() => {
     fetchWithAuth("/food")
       .then((res) => res.json())
@@ -44,41 +36,42 @@ export const AddComboPage = () => {
   const getTotalItems = () =>
     Object.values(selectedFoods).reduce((sum, qty) => sum + qty, 0);
 
-  // Input change
   const handleInputChange = (field: string, value: string) => {
     setFoodData((prev) => ({ ...prev, [field]: value }));
   };
+  
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setComboImage(file);
+      setPreviewImage(URL.createObjectURL(file));
+    }
+  };
 
-  // Food selection
   const handleQuantityChange = (foodId: number, delta: number) => {
     const currentQty = selectedFoods[foodId] || 0;
     const total = getTotalItems();
     const newQty = currentQty + delta;
     const newTotal = total + delta;
 
-    // Prevent invalid moves
-    if (newQty < 0) return; // shouldn't happen because button is disabled, but safe-guard
+    if (newQty < 0) return;
     if (newTotal > 5) {
       toast({ title: "A combo cannot exceed 5 food items." });
       return;
     }
 
-    // Build updated selection (preserve duplicates). Remove key if qty becomes 0.
     const updatedSelected: { [key: number]: number } = { ...selectedFoods };
     if (newQty > 0) {
       updatedSelected[foodId] = newQty;
     } else {
-      // newQty === 0 -> remove the entry
       delete updatedSelected[foodId];
     }
 
-    // Recalculate sum from the updated selection
     const sum = Object.entries(updatedSelected).reduce((acc, [id, qty]) => {
       const food = allFoods.find((f) => f.id === Number(id));
       return acc + (food ? food.price * (qty as number) : 0);
     }, 0);
 
-    // Determine discount using the updated total
     let discountRate = 0;
     switch (newTotal) {
       case 2:
@@ -101,8 +94,7 @@ export const AddComboPage = () => {
     setTotalPrice(sum * (1 - discountRate));
   };
 
-  // Submit combo
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!foodData.name) {
@@ -124,23 +116,52 @@ export const AddComboPage = () => {
       return;
     }
 
-    fetchWithAuth(
-      `/food/combos?comboName=${encodeURIComponent(
-        foodData.name
-      )}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(foodIds),
+    let imageUrl = "";
+    if (comboImage) {
+      const formData = new FormData();
+      formData.append("file", comboImage);
+      try {
+        const response = await fetchWithAuth("/media", {
+          method: "POST",
+          body: formData,
+        });
+        if (response.ok) {
+          const result = await response.json();
+          imageUrl = result.data.url;
+        } else {
+          toast({
+            title: "Error",
+            description: "Image upload failed.",
+            variant: "destructive",
+          });
+          return;
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "An error occurred during image upload.",
+          variant: "destructive",
+        });
+        return;
       }
-    )
+    }
+
+    const url = `/food/combos?comboName=${encodeURIComponent(
+      foodData.name
+    )}&photoUrl=${encodeURIComponent(imageUrl)}`;
+
+    fetchWithAuth(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(foodIds),
+    })
       .then((res) => res.json())
       .then(() => {
         toast({
           title: "Food Combo Added",
           description: "New food combo has been successfully added.",
         });
-        navigate(-1); // back to combo list
+        navigate(-1);
       })
       .catch((err) => {
         console.error(err);
@@ -151,7 +172,6 @@ export const AddComboPage = () => {
   return (
     <div className="min-h-screen bg-gradient-primary">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Header */}
         <div className="flex items-center mb-6">
           <ArrowLeft
             className="w-6 h-6 text-foreground mr-4 cursor-pointer"
@@ -162,7 +182,6 @@ export const AddComboPage = () => {
           </h1>
         </div>
 
-        {/* Food Selection */}
         <Card className="p-6 bg-card/50 border-border/50 mb-6">
           <h2 className="text-lg font-semibold mb-4 text-foreground">
             Select Food Items
@@ -200,15 +219,13 @@ export const AddComboPage = () => {
           </div>
         </Card>
 
-        {/* Combo Form */}
         <Card className="p-6 bg-card/50 border-border/50">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Combo Name */}
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
+                <Label className="block text-sm font-medium text-foreground mb-2">
                   Food Combo Name *
-                </label>
+                </Label>
                 <Input
                   value={foodData.name}
                   onChange={(e) => handleInputChange("name", e.target.value)}
@@ -216,12 +233,10 @@ export const AddComboPage = () => {
                   required
                 />
               </div>
-
-              {/* Price */}
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
+                <Label className="block text-sm font-medium text-foreground mb-2">
                   Total Price (Ks)
-                </label>
+                </Label>
                 <Input
                   value={totalPrice + " Ks"}
                   readOnly
@@ -229,22 +244,22 @@ export const AddComboPage = () => {
                 />
               </div>
             </div>
-
-            {/* Food Image Upload */}
             <div className="space-y-4">
               <Label className="text-foreground">Food Image</Label>
               <div className="border-2 border-dashed border-border/50 rounded-lg p-8 text-center hover:border-border transition-colors">
-                <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground mb-2">
-                  Drop your image here, or browse
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Supports: JPG, PNG (Max 5MB)
-                </p>
+                <Input type="file" onChange={handleFileChange} className="hidden" id="combo-image-upload" />
+                <Label htmlFor="combo-image-upload" className="cursor-pointer">
+                  <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-2">
+                    Drop your image here, or browse
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Supports: JPG, PNG (Max 5MB)
+                  </p>
+                </Label>
+                {previewImage && <img src={previewImage} alt="Combo preview" className="mt-4 mx-auto h-32" />}
               </div>
             </div>
-
-            {/* Action Buttons */}
             <div className="flex justify-end space-x-4 pt-4">
               <Button
                 type="button"
