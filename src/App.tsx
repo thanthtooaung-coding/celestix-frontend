@@ -39,6 +39,7 @@ import React from "react";
 import { AdminsTable } from "./components/admin/AdminsTable";
 import { AddComboPage } from "./pages/AddComboPage";
 import { EditComboPage } from "./pages/EditComboPage";
+import { BookingRefundsTable } from "./components/admin/BookingRefundsTable";
 
 const queryClient = new QueryClient();
 
@@ -132,6 +133,7 @@ const App = () => (
                 <Route path="admins/add" element={<AddAdminPage />} />
                 <Route path="combo" element={<AddComboPage />} />
                 <Route path="combo/edit/:id" element={<EditComboPage />} />
+                <Route path="refunds" element={<BookingRefundsTable />} />
           </Route>
           
           <Route path="*" element={<NotFound />} />

@@ -54,7 +54,6 @@ export const ProfilePage = () => {
     fetchBookings();
   }, []);
 
-
   const handleCancelBooking = (bookingId: string) => {
     setBookingToCancel(bookingId);
     setIsCancelDialogOpen(true);
@@ -64,11 +63,21 @@ export const ProfilePage = () => {
     if (!bookingToCancel) return;
 
     try {
-      const response = await fetchWithAuth(`/bookings/${bookingToCancel}/cancel`, {
-        method: "PUT",
-      });
+      const response = await fetchWithAuth(
+        `/bookings/${bookingToCancel}/cancel`,
+        {
+          method: "PUT",
+        }
+      );
 
       if (response.ok) {
+        // Move the cancelled booking to completedBookings
+        const cancelledBooking = upcomingBookings.find(b => b.id === bookingToCancel);
+        if(cancelledBooking){
+            cancelledBooking.status = "Cancelled";
+            setCompletedBookings(prev => [cancelledBooking, ...prev]);
+        }
+
         setUpcomingBookings((prev) =>
           prev.filter((booking) => booking.id !== bookingToCancel)
         );
@@ -96,6 +105,38 @@ export const ProfilePage = () => {
     }
   };
 
+  const handleRequestRefund = async (bookingId: string) => {
+    try {
+      const response = await fetchWithAuth(`/refunds/request/${bookingId}`, {
+        method: "POST",
+      });
+      if (response.ok) {
+        toast({
+          title: "Refund Requested",
+          description: "Your refund request has been submitted successfully.",
+        });
+        setCompletedBookings(prev => 
+            prev.map(b => 
+                b.id === bookingId ? { ...b, refundStatus: 'PENDING' } : b
+            )
+        );
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "Error",
+          description: errorData.message || "Failed to request refund.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An error occurred while requesting the refund.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <>
       <div className="min-h-screen bg-gradient-cinema">
@@ -105,29 +146,47 @@ export const ProfilePage = () => {
 
             <Tabs defaultValue="bookings" className="w-full">
               <TabsList className="grid w-full grid-cols-3 bg-card/50 border-border/50">
-                <TabsTrigger value="bookings" className="text-white data-[state=active]:bg-primary">
+                <TabsTrigger
+                  value="bookings"
+                  className="text-white data-[state=active]:bg-primary"
+                >
                   Bookings
                 </TabsTrigger>
-                <TabsTrigger value="history" className="text-white data-[state=active]:bg-primary">
+                <TabsTrigger
+                  value="history"
+                  className="text-white data-[state=active]:bg-primary"
+                >
                   History
                 </TabsTrigger>
-                <TabsTrigger value="profile" className="text-white data-[state=active]:bg-primary">
+                <TabsTrigger
+                  value="profile"
+                  className="text-white data-[state=active]:bg-primary"
+                >
                   Profile Info
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="bookings" className="mt-6">
                 <div className="space-y-4">
-                  <h2 className="text-xl font-semibold text-white mb-4">Upcoming Bookings</h2>
+                  <h2 className="text-xl font-semibold text-white mb-4">
+                    Upcoming Bookings
+                  </h2>
                   {upcomingBookings.map((booking) => (
-                    <Card key={booking.id} className="bg-card/50 border-border/50 p-6">
+                    <Card
+                      key={booking.id}
+                      className="bg-card/50 border-border/50 p-6"
+                    >
                       <div className="flex justify-between items-start mb-4">
                         <div>
-                          <h3 className="text-lg font-semibold text-white">{booking.movieTitle}</h3>
+                          <h3 className="text-lg font-semibold text-white">
+                            {booking.movieTitle}
+                          </h3>
                           <div className="flex items-center gap-4 text-muted-foreground mt-2">
                             <div className="flex items-center gap-1">
                               <Calendar className="w-4 h-4" />
-                              <span>{booking.showtimeDate} at {booking.showtimeTime}</span>
+                              <span>
+                                {booking.showtimeDate} at {booking.showtimeTime}
+                              </span>
                             </div>
                             <div className="flex items-center gap-1">
                               <MapPin className="w-4 h-4" />
@@ -136,7 +195,6 @@ export const ProfilePage = () => {
                           </div>
                         </div>
                         <div className="flex gap-2">
-
                           <Button
                             variant="destructive"
                             size="sm"
@@ -152,25 +210,37 @@ export const ProfilePage = () => {
                         <div>
                           <p className="text-sm text-muted-foreground">Seats</p>
                           <div className="flex gap-1 mt-1">
-                            {booking.seats.split(',').map((seat: any) => (
-                              <Badge key={seat} variant="outline" className="text-white border-white/20">
+                            {booking.seats.split(",").map((seat: any) => (
+                              <Badge
+                                key={seat}
+                                variant="outline"
+                                className="text-white border-white/20"
+                              >
                                 {seat}
                               </Badge>
                             ))}
                           </div>
                         </div>
                         <div>
-                          <p className="text-sm text-muted-foreground">Food & Beverage</p>
+                          <p className="text-sm text-muted-foreground">
+                            Food & Beverage
+                          </p>
                           <div className="mt-1">
-                            <span className="text-sm text-muted-foreground">No food items</span>
+                            <span className="text-sm text-muted-foreground">
+                              No food items
+                            </span>
                           </div>
                         </div>
                       </div>
 
                       <div className="mt-4 pt-4 border-t border-border/50">
                         <div className="flex justify-between items-center">
-                          <span className="text-muted-foreground">Total Amount</span>
-                          <span className="text-lg font-semibold text-accent">${booking.totalAmount}</span>
+                          <span className="text-muted-foreground">
+                            Total Amount
+                          </span>
+                          <span className="text-lg font-semibold text-accent">
+                            ${booking.totalAmount}
+                          </span>
                         </div>
                       </div>
                     </Card>
@@ -180,15 +250,24 @@ export const ProfilePage = () => {
 
               <TabsContent value="history" className="mt-6">
                 <div className="space-y-4">
-                  <h2 className="text-xl font-semibold text-white mb-4">Booking History</h2>
+                  <h2 className="text-xl font-semibold text-white mb-4">
+                    Booking History
+                  </h2>
                   {completedBookings.map((booking) => (
-                    <Card key={booking.id} className="bg-card/50 border-border/50 p-6 opacity-80">
+                    <Card
+                      key={booking.id}
+                      className="bg-card/50 border-border/50 p-6 opacity-80"
+                    >
                       <div className="mb-4">
-                        <h3 className="text-lg font-semibold text-white">{booking.movieTitle}</h3>
+                        <h3 className="text-lg font-semibold text-white">
+                          {booking.movieTitle}
+                        </h3>
                         <div className="flex items-center gap-4 text-muted-foreground mt-2">
                           <div className="flex items-center gap-1">
                             <Calendar className="w-4 h-4" />
-                            <span>{booking.showtimeDate} at {booking.showtimeTime}</span>
+                            <span>
+                              {booking.showtimeDate} at {booking.showtimeTime}
+                            </span>
                           </div>
                           <div className="flex items-center gap-1">
                             <MapPin className="w-4 h-4" />
@@ -199,13 +278,39 @@ export const ProfilePage = () => {
 
                       <div className="flex justify-between items-center">
                         <div className="flex gap-1">
-                          {booking.seats.split(',').map((seat: any) => (
-                            <Badge key={seat} variant="outline" className="text-white border-white/20">
+                          {booking.seats.split(",").map((seat: any) => (
+                            <Badge
+                              key={seat}
+                              variant="outline"
+                              className="text-white border-white/20"
+                            >
                               {seat}
                             </Badge>
                           ))}
                         </div>
-                        <Badge className="bg-green-600 text-white">Completed</Badge>
+                        {booking.status === "Confirmed" ? (
+                          <Badge className="bg-green-600 text-white">
+                            {booking.status}
+                          </Badge>
+                        ) : booking.status === "Cancelled" ? (
+                            <div className="flex items-center gap-2">
+                                <Badge className="bg-red-600 text-white">
+                                    {booking.status}
+                                </Badge>
+                                {booking.refundStatus !== 'PENDING' && (
+                                    <Button
+                                    size="sm"
+                                    onClick={() => handleRequestRefund(booking.id)}
+                                    >
+                                    Request Refund
+                                    </Button>
+                                )}
+                            </div>
+                        ) : (
+                          <Badge className="bg-gray-600 text-white">
+                            {booking.status}
+                          </Badge>
+                        )}
                       </div>
                     </Card>
                   ))}
@@ -222,14 +327,18 @@ export const ProfilePage = () => {
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <h2 className="text-xl font-semibold text-white">{user.name}</h2>
+                      <h2 className="text-xl font-semibold text-white">
+                        {user.name}
+                      </h2>
                       <p className="text-muted-foreground">{user.email}</p>
                     </div>
                   </div>
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-white mb-2">Name</label>
+                      <label className="block text-sm font-medium text-white mb-2">
+                        Name
+                      </label>
                       <input
                         type="text"
                         value={user.name}
@@ -238,7 +347,9 @@ export const ProfilePage = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-white mb-2">Email</label>
+                      <label className="block text-sm font-medium text-white mb-2">
+                        Email
+                      </label>
                       <input
                         type="email"
                         value={user.email}
@@ -250,7 +361,7 @@ export const ProfilePage = () => {
 
                   <Button
                     className="mt-6 bg-gradient-accent hover:shadow-glow"
-                    onClick={() => window.location.href = '/edit-profile'}
+                    onClick={() => (window.location.href = "/edit-profile")}
                   >
                     Edit Profile
                   </Button>
@@ -260,17 +371,27 @@ export const ProfilePage = () => {
           </div>
         </div>
       </div>
-      <AlertDialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
+      <AlertDialog
+        open={isCancelDialogOpen}
+        onOpenChange={setIsCancelDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to cancel?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Are you sure you want to cancel?
+            </AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will cancel your booking.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setBookingToCancel(null)}>Back</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmCancelBooking} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogCancel onClick={() => setBookingToCancel(null)}>
+              Back
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmCancelBooking}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Confirm
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -170,8 +170,12 @@ export const FoodTable = () => {
                     className="border-b border-border/30 hover:bg-secondary/30 transition-colors"
                   >
                     <td className="p-4 pl-9 flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-secondary rounded-lg flex items-center justify-center text-2xl">
-                        {item.image || "🍽"}
+                      <div className="w-12 h-12 bg-secondary rounded-lg flex items-center justify-center text-2xl overflow-hidden">
+                        {item.photoUrl ? (
+                          <img src={item.photoUrl} alt={item.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span>🍽</span>
+                        )}
                       </div>
                       <span className="font-medium text-foreground">
                         {item.name}
@@ -281,8 +285,12 @@ export const FoodTable = () => {
                   className="border-b border-border/30 hover:bg-secondary/30 transition-colors"
                 >
                   <td className="p-4 pl-9 flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-secondary rounded-lg flex items-center justify-center text-2xl">
-                      {item.image || "🍽"}
+                    <div className="w-12 h-12 bg-secondary rounded-lg flex items-center justify-center text-2xl overflow-hidden">
+                      {item.photoUrl ? (
+                          <img src={item.photoUrl} alt={item.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span>🍽</span>
+                        )}
                     </div>
 
                     <span className="font-medium">{item.comboName}</span>

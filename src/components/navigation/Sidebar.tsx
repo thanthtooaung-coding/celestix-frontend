@@ -13,6 +13,7 @@ import {
   Tag,
   LogOut,
   Shield,
+  Receipt,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -24,10 +25,11 @@ const menuItems = [
   { id: "movies", label: "Movies", icon: Film, path: "/admin/movies" },
   { id: "movie-genre", label: "Movie Genre", icon: Tag, path: "/admin/movie-genres" },
   { id: "food", label: "Food", icon: Users, path: "/admin/food" },
-  { id: "food-category", label: "Food Category", icon: ClipboardList, path: "/admin/food-categories" },
+  // { id: "food-category", label: "Food Category", icon: ClipboardList, path: "/admin/food-categories" },
   { id: "showtimes", label: "Showtimes", icon: Calendar, path: "/admin/showtimes" },
   { id: "theaters", label: "Theaters", icon: Building, path: "/admin/theaters" },
   { id: "bookings", label: "Bookings", icon: Newspaper, path: "/admin/bookings" },
+  { id: "refunds", label: "Refunds", icon: Receipt, path: "/admin/refunds" },
   { id: "admins", label: "Admins", icon: Shield, path: "/admin/admins" },
 ];
 

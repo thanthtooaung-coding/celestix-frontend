@@ -180,6 +180,7 @@ export const BookingsTable = () => {
     .filter((b) =>
         (b.customerName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
         (b.theaterName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (b.bookingId?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
         (b.movieTitle?.toLowerCase() || '').includes(searchTerm.toLowerCase())
     )
     .filter((b) => filters.status.length === 0 || filters.status.includes(b.status));
@@ -269,6 +270,7 @@ export const BookingsTable = () => {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border/50">                  
+                  <th className="text-left p-4 text-muted-foreground font-medium">Booking ID</th>
                   <th className="text-left p-4 text-muted-foreground font-medium">Customer</th>
                   <th className="text-left p-4 text-muted-foreground font-medium">Theater Name</th>
                   <th className="text-left p-4 text-muted-foreground font-medium">Movie</th>
@@ -285,6 +287,7 @@ export const BookingsTable = () => {
                   const seatsArray = b.seats ? b.seats.split(',').map((s: string) => s.trim()) : [];
                   return (
                     <tr key={b.id} className="border-b border-border/30 hover:bg-secondary/30 transition-colors">                      
+                      <td className="p-4 text-muted-foreground">{b.bookingId}</td>
                       <td className="p-4">
                         <div>
                           <div className="font-medium text-foreground">{b.customerName}</div>
