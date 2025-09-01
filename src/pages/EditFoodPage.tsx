@@ -1,43 +1,60 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { fetchWithAuth } from "@/lib/api";
 
 export const EditFoodPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Mock data - in real app, this would fetch based on ID
-  const [foodData, setFoodData] = useState({
-    name: "Classic Popcorn",
-    price: "8.99",
-    category: "snacks",
-    description: "Fresh buttery popcorn made daily",
-    allergens: "Contains dairy",
-    availability: "available"
+  const [foodData, setFood] = useState({
+    name: "",
+    price: "",
+    category: "",
+    description: "",
+    allergens: "",
+    available: ""
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast({
-      title: "Food Item Updated",
-      description: "Food item has been successfully updated.",
-    });
-    navigate(-1);
-  };
+  // Fetch food by ID from backend
+  useEffect(() => {
+    fetchWithAuth(`/food`)
+      .then((res) => res.json())
+      .then((data) => {
+        const found = data.find((f) => f.id === Number(id));
+        if (found) setFood(found);
+      })
+      .catch((err) => console.error(err));
+  }, [id]);
 
   const handleInputChange = (field: string, value: string) => {
-    setFoodData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFood(prev => ({ ...prev, [field]: value }));
+  };
+    
+    const handleSubmit = async (e) => {
+    e.preventDefault();
+    await fetchWithAuth(`/food/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(foodData),
+    })
+      .then((res) => res.json())
+      .then(() => navigate("/admin/food"))
+      .catch((err) => console.error(err));
   };
 
   return (
@@ -89,27 +106,25 @@ export const EditFoodPage = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="snacks">Snacks</SelectItem>
-                      <SelectItem value="beverages">Beverages</SelectItem>
-                      <SelectItem value="meals">Meals</SelectItem>
-                      <SelectItem value="desserts">Desserts</SelectItem>
-                      <SelectItem value="combos">Combos</SelectItem>
+                      <SelectItem value="Food">Food</SelectItem>
+                      <SelectItem value="Drinks">Drinks</SelectItem>
+                      <SelectItem value="Snacks">Snacks</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="availability" className="text-foreground">Availability</Label>
-                  <Select value={foodData.availability} onValueChange={(value) => handleInputChange("availability", value)}>
+                {/* <div className="space-y-2">
+                  <Label htmlFor="availabile" className="text-foreground">Availability</Label>
+                  <Select value={foodData.available} onValueChange={(value) => handleInputChange("availabile", value)}>
                     <SelectTrigger className="bg-secondary/50 border-border/50 text-foreground">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="available">Available</SelectItem>
-                      <SelectItem value="out-of-stock">Out of Stock</SelectItem>
-                      <SelectItem value="discontinued">Discontinued</SelectItem>
+                      <SelectItem value="Available">Available</SelectItem>
+                      <SelectItem value="Out of Stock">Out of Stock</SelectItem>
+                      <SelectItem value="Discontinued">Discontinued</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
+                </div> */}
               </div>
 
               {/* Additional Information */}

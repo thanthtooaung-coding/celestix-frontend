@@ -15,7 +15,22 @@ interface FoodComboCardProps {
   onQuantityChange: (id: string, quantity: number) => void;
 }
 
-export const FoodComboCard = ({ combo, quantity, onQuantityChange }: FoodComboCardProps) => {
+export const FoodComboCard = ({
+  combo,
+  quantity,
+  onQuantityChange,
+}: FoodComboCardProps) => {
+  const formatItems = (items: string[]) => {
+    const grouped: { [key: string]: number } = {};
+    items.forEach((item) => {
+      grouped[item] = (grouped[item] || 0) + 1;
+    });
+
+    return Object.entries(grouped)
+      .map(([name, qty]) => `${qty}x ${name}`)
+      .join(" + ");
+  };
+
   return (
     <Card className="bg-card/50 border-border/50 overflow-hidden hover:border-primary/50 transition-all duration-200">
       {/* Food Image */}
@@ -25,7 +40,7 @@ export const FoodComboCard = ({ combo, quantity, onQuantityChange }: FoodComboCa
           alt={combo.name}
           className="w-full h-full object-cover"
         />
-        
+
         {/* Price Badge */}
         <div className="absolute top-2 right-2 bg-primary text-primary-foreground px-2 py-1 rounded font-bold">
           ${combo.price}
@@ -35,9 +50,9 @@ export const FoodComboCard = ({ combo, quantity, onQuantityChange }: FoodComboCa
       {/* Combo Info */}
       <div className="p-4 space-y-3">
         <h3 className="font-bold text-foreground">{combo.name}</h3>
-        
+
         <div className="text-sm text-muted-foreground">
-          {combo.items.join(" + ")}
+          {formatItems(combo.items)}
         </div>
 
         {/* Quantity Controls */}
@@ -45,15 +60,17 @@ export const FoodComboCard = ({ combo, quantity, onQuantityChange }: FoodComboCa
           <Button
             variant="outline"
             size="icon"
-            onClick={() => onQuantityChange(combo.id, Math.max(0, quantity - 1))}
+            onClick={() =>
+              onQuantityChange(combo.id, Math.max(0, quantity - 1))
+            }
             className="w-8 h-8"
             disabled={quantity <= 0}
           >
             <Minus className="w-4 h-4" />
           </Button>
-          
+
           <span className="font-bold text-lg w-8 text-center">{quantity}</span>
-          
+
           <Button
             variant="outline"
             size="icon"
