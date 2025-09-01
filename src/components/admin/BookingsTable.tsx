@@ -33,9 +33,9 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 // Added MoreHorizontal icon for the actions menu
 import { Search, Trash2, Armchair, MoreHorizontal } from "lucide-react";
-import { FilterPopover } from "@/components/FilterPopover";
+import { useToast } from "@/hooks/use-toast";
 import { fetchWithAuth } from "@/lib/api";
-import { useToast } from "@/components/ui/use-toast";
+import { FilterPopover } from "../FilterPopover";
 
 const StatusBadge = ({ status }: { status: string }) => {
   const variants: { [key: string]: string } = {
@@ -67,7 +67,9 @@ export const BookingsTable = () => {
   const [isSeatsDialogOpen, setIsSeatsDialogOpen] = useState(false);
   const [isShowtimeDialogOpen, setIsShowtimeDialogOpen] = useState(false);
   const [isLimitDialogOpen, setIsLimitDialogOpen] = useState(false);
+  const [isCancellationDialogOpen, setIsCancellationDialogOpen] = useState(false);
   const [bookingLimit, setBookingLimit] = useState("");
+  const [cancellationMinutes, setCancellationMinutes] = useState("");
   
   // State to hold the booking object for the selected row
   const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
@@ -99,10 +101,24 @@ export const BookingsTable = () => {
           setBookingLimit(data.data.value);
         }
       } catch (error) {
+          console.error("Failed to fetch booking limit", error);
       }
+    };
+
+    const fetchCancellationMinutes = async () => {
+        try {
+            const response = await fetchWithAuth("/configurations/CANCELLATION_MINUTES");
+            if (response.ok) {
+                const data = await response.json();
+                setCancellationMinutes(data.data.value);
+            }
+        } catch (error) {
+            console.error("Failed to fetch cancellation minutes", error);
+        }
     };
     fetchBookings();
     fetchBookingLimit();
+    fetchCancellationMinutes();
   }, [toast]);
 
   const handleDelete = async (bookingId: string) => {
@@ -142,11 +158,29 @@ export const BookingsTable = () => {
     }
   };
 
+    const handleUpdateCancellationMinutes = async () => {
+        try {
+            const response = await fetchWithAuth("/configurations/CANCELLATION_MINUTES", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ value: cancellationMinutes }),
+            });
+            if (response.ok) {
+                toast({ title: "Success", description: "Cancellation time updated successfully." });
+                setIsCancellationDialogOpen(false);
+            } else {
+                toast({ title: "Error", description: "Failed to update cancellation time.", variant: "destructive" });
+            }
+        } catch (error) {
+            toast({ title: "Error", description: "An error occurred while updating the cancellation time.", variant: "destructive" });
+        }
+    };
+
   const filteredBookings = bookings
     .filter((b) =>
-        b.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        b.theaterName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        b.movieTitle.toLowerCase().includes(searchTerm.toLowerCase())
+        (b.customerName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (b.theaterName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (b.movieTitle?.toLowerCase() || '').includes(searchTerm.toLowerCase())
     )
     .filter((b) => filters.status.length === 0 || filters.status.includes(b.status));
 
@@ -160,31 +194,59 @@ export const BookingsTable = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">Bookings</h1>
-          <Dialog open={isLimitDialogOpen} onOpenChange={setIsLimitDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>Manage Booking Limit</Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Manage Booking Limit</DialogTitle>
-                <DialogDescription>
-                  Set the maximum number of bookings a user can have.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="py-4">
-                <Input
-                  type="number"
-                  value={bookingLimit}
-                  onChange={(e) => setBookingLimit(e.target.value)}
-                  placeholder="Enter booking limit"
-                />
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsLimitDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleUpdateLimit}>Save Changes</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <div className="flex gap-2">
+            <Dialog open={isLimitDialogOpen} onOpenChange={setIsLimitDialogOpen}>
+                <DialogTrigger asChild>
+                <Button>Manage Booking Limit</Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Manage Booking Limit</DialogTitle>
+                    <DialogDescription>
+                    Set the maximum number of bookings a user can have.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                    <Input
+                    type="number"
+                    value={bookingLimit}
+                    onChange={(e) => setBookingLimit(e.target.value)}
+                    placeholder="Enter booking limit"
+                    />
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsLimitDialogOpen(false)}>Cancel</Button>
+                    <Button onClick={handleUpdateLimit}>Save Changes</Button>
+                </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isCancellationDialogOpen} onOpenChange={setIsCancellationDialogOpen}>
+                <DialogTrigger asChild>
+                    <Button>Manage Cancellation Time</Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Manage Cancellation Time</DialogTitle>
+                        <DialogDescription>
+                            Set the time in minutes before a showtime that a user can cancel their booking.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Input
+                            type="number"
+                            value={cancellationMinutes}
+                            onChange={(e) => setCancellationMinutes(e.target.value)}
+                            placeholder="Enter cancellation minutes"
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsCancellationDialogOpen(false)}>Cancel</Button>
+                        <Button onClick={handleUpdateCancellationMinutes}>Save Changes</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         <Card className="glass-card p-4">
@@ -249,7 +311,7 @@ export const BookingsTable = () => {
                             ) : ( b.seats || 'N/A' )}
                          </Button>
                       </td>
-                      <td className="p-4 text-foreground font-medium">{b.totalAmount ? `${b.totalAmount} MMK` : 'N/A'}</td>
+                      <td className="p-4 text-foreground font-medium">{b.totalAmount ? `$${b.totalAmount}` : 'N/A'}</td>
                       <td className="p-4"><StatusBadge status={b.status} /></td>
                       <td className="p-4"><PaymentStatusBadge status={b.paymentStatus} /></td>
                       <td className="p-4 text-right">

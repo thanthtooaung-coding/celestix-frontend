@@ -6,11 +6,25 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Calendar, MapPin, Edit3, Trash2 } from "lucide-react";
 import { fetchWithAuth } from "@/lib/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/components/ui/use-toast";
 
 export const ProfilePage = () => {
-  const [upcomingBookings, setUpcomingBookings] = useState([]);
-  const [completedBookings, setCompletedBookings] = useState([]);
+  const [upcomingBookings, setUpcomingBookings] = useState<any[]>([]);
+  const [completedBookings, setCompletedBookings] = useState<any[]>([]);
   const [user, setUser] = useState({ name: "", email: "", profileUrl: "" });
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const [bookingToCancel, setBookingToCancel] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -41,36 +55,135 @@ export const ProfilePage = () => {
   }, []);
 
 
-  const handleCancelBooking = (bookingId) => {
-    // Implement booking cancellation logic here
+  const handleCancelBooking = (bookingId: string) => {
+    setBookingToCancel(bookingId);
+    setIsCancelDialogOpen(true);
+  };
+
+  const confirmCancelBooking = async () => {
+    if (!bookingToCancel) return;
+
+    try {
+      const response = await fetchWithAuth(`/bookings/${bookingToCancel}/cancel`, {
+        method: "PUT",
+      });
+
+      if (response.ok) {
+        setUpcomingBookings((prev) =>
+          prev.filter((booking) => booking.id !== bookingToCancel)
+        );
+        toast({
+          title: "Success",
+          description: "Booking cancelled successfully.",
+        });
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "Error",
+          description: errorData.message || "Failed to cancel booking.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCancelDialogOpen(false);
+      setBookingToCancel(null);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-cinema">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold text-white mb-8">My Profile</h1>
+    <>
+      <div className="min-h-screen bg-gradient-cinema">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-3xl font-bold text-white mb-8">My Profile</h1>
 
-          <Tabs defaultValue="bookings" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 bg-card/50 border-border/50">
-              <TabsTrigger value="bookings" className="text-white data-[state=active]:bg-primary">
-                Bookings
-              </TabsTrigger>
-              <TabsTrigger value="history" className="text-white data-[state=active]:bg-primary">
-                History
-              </TabsTrigger>
-              <TabsTrigger value="profile" className="text-white data-[state=active]:bg-primary">
-                Profile Info
-              </TabsTrigger>
-            </TabsList>
+            <Tabs defaultValue="bookings" className="w-full">
+              <TabsList className="grid w-full grid-cols-3 bg-card/50 border-border/50">
+                <TabsTrigger value="bookings" className="text-white data-[state=active]:bg-primary">
+                  Bookings
+                </TabsTrigger>
+                <TabsTrigger value="history" className="text-white data-[state=active]:bg-primary">
+                  History
+                </TabsTrigger>
+                <TabsTrigger value="profile" className="text-white data-[state=active]:bg-primary">
+                  Profile Info
+                </TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="bookings" className="mt-6">
-              <div className="space-y-4">
-                <h2 className="text-xl font-semibold text-white mb-4">Upcoming Bookings</h2>
-                {upcomingBookings.map((booking) => (
-                  <Card key={booking.id} className="bg-card/50 border-border/50 p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
+              <TabsContent value="bookings" className="mt-6">
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold text-white mb-4">Upcoming Bookings</h2>
+                  {upcomingBookings.map((booking) => (
+                    <Card key={booking.id} className="bg-card/50 border-border/50 p-6">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h3 className="text-lg font-semibold text-white">{booking.movieTitle}</h3>
+                          <div className="flex items-center gap-4 text-muted-foreground mt-2">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="w-4 h-4" />
+                              <span>{booking.showtimeDate} at {booking.showtimeTime}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <MapPin className="w-4 h-4" />
+                              <span>{booking.theaterName}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleCancelBooking(booking.id)}
+                          >
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Seats</p>
+                          <div className="flex gap-1 mt-1">
+                            {booking.seats.split(',').map((seat: any) => (
+                              <Badge key={seat} variant="outline" className="text-white border-white/20">
+                                {seat}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Food & Beverage</p>
+                          <div className="mt-1">
+                            <span className="text-sm text-muted-foreground">No food items</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 pt-4 border-t border-border/50">
+                        <div className="flex justify-between items-center">
+                          <span className="text-muted-foreground">Total Amount</span>
+                          <span className="text-lg font-semibold text-accent">${booking.totalAmount}</span>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="history" className="mt-6">
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold text-white mb-4">Booking History</h2>
+                  {completedBookings.map((booking) => (
+                    <Card key={booking.id} className="bg-card/50 border-border/50 p-6 opacity-80">
+                      <div className="mb-4">
                         <h3 className="text-lg font-semibold text-white">{booking.movieTitle}</h3>
                         <div className="flex items-center gap-4 text-muted-foreground mt-2">
                           <div className="flex items-center gap-1">
@@ -83,130 +196,86 @@ export const ProfilePage = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="flex gap-2">
 
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleCancelBooking(booking.id)}
-                        >
-                          <Trash2 className="w-4 h-4 mr-1" />
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Seats</p>
-                        <div className="flex gap-1 mt-1">
-                          {booking.seats.split(',').map((seat) => (
+                      <div className="flex justify-between items-center">
+                        <div className="flex gap-1">
+                          {booking.seats.split(',').map((seat: any) => (
                             <Badge key={seat} variant="outline" className="text-white border-white/20">
                               {seat}
                             </Badge>
                           ))}
                         </div>
+                        <Badge className="bg-green-600 text-white">Completed</Badge>
                       </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Food & Beverage</p>
-                        <div className="mt-1">
-                          <span className="text-sm text-muted-foreground">No food items</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 pt-4 border-t border-border/50">
-                      <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Total Amount</span>
-                        <span className="text-lg font-semibold text-accent">${booking.totalAmount}</span>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="history" className="mt-6">
-              <div className="space-y-4">
-                <h2 className="text-xl font-semibold text-white mb-4">Booking History</h2>
-                {completedBookings.map((booking) => (
-                  <Card key={booking.id} className="bg-card/50 border-border/50 p-6 opacity-80">
-                    <div className="mb-4">
-                      <h3 className="text-lg font-semibold text-white">{booking.movieTitle}</h3>
-                      <div className="flex items-center gap-4 text-muted-foreground mt-2">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          <span>{booking.showtimeDate} at {booking.showtimeTime}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <MapPin className="w-4 h-4" />
-                          <span>{booking.theaterName}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-between items-center">
-                      <div className="flex gap-1">
-                        {booking.seats.split(',').map((seat) => (
-                          <Badge key={seat} variant="outline" className="text-white border-white/20">
-                            {seat}
-                          </Badge>
-                        ))}
-                      </div>
-                      <Badge className="bg-green-600 text-white">Completed</Badge>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="profile" className="mt-6">
-              <Card className="bg-card/50 border-border/50 p-6">
-                <div className="flex items-center gap-4 mb-6">
-                  <Avatar className="w-16 h-16">
-                    <AvatarImage src={user.profileUrl} />
-                    <AvatarFallback>
-                      <User className="w-8 h-8 text-primary" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h2 className="text-xl font-semibold text-white">{user.name}</h2>
-                    <p className="text-muted-foreground">{user.email}</p>
-                  </div>
+                    </Card>
+                  ))}
                 </div>
+              </TabsContent>
 
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-white mb-2">Name</label>
-                    <input
-                      type="text"
-                      value={user.name}
-                      className="w-full px-3 py-2 bg-background/50 border border-border/50 rounded-md text-white"
-                      readOnly
-                    />
+              <TabsContent value="profile" className="mt-6">
+                <Card className="bg-card/50 border-border/50 p-6">
+                  <div className="flex items-center gap-4 mb-6">
+                    <Avatar className="w-16 h-16">
+                      <AvatarImage src={user.profileUrl} />
+                      <AvatarFallback>
+                        <User className="w-8 h-8 text-primary" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h2 className="text-xl font-semibold text-white">{user.name}</h2>
+                      <p className="text-muted-foreground">{user.email}</p>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-white mb-2">Email</label>
-                    <input
-                      type="email"
-                      value={user.email}
-                      className="w-full px-3 py-2 bg-background/50 border border-border/50 rounded-md text-white"
-                      readOnly
-                    />
-                  </div>
-                </div>
 
-                <Button
-                  className="mt-6 bg-gradient-accent hover:shadow-glow"
-                  onClick={() => window.location.href = '/edit-profile'}
-                >
-                  Edit Profile
-                </Button>
-              </Card>
-            </TabsContent>
-          </Tabs>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-white mb-2">Name</label>
+                      <input
+                        type="text"
+                        value={user.name}
+                        className="w-full px-3 py-2 bg-background/50 border border-border/50 rounded-md text-white"
+                        readOnly
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-white mb-2">Email</label>
+                      <input
+                        type="email"
+                        value={user.email}
+                        className="w-full px-3 py-2 bg-background/50 border border-border/50 rounded-md text-white"
+                        readOnly
+                      />
+                    </div>
+                  </div>
+
+                  <Button
+                    className="mt-6 bg-gradient-accent hover:shadow-glow"
+                    onClick={() => window.location.href = '/edit-profile'}
+                  >
+                    Edit Profile
+                  </Button>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
       </div>
-    </div>
+      <AlertDialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to cancel?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will cancel your booking.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setBookingToCancel(null)}>Back</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmCancelBooking} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
