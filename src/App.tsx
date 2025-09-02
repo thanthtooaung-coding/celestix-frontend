@@ -107,7 +107,9 @@ const App = () => (
           <Route path="/login" element={<LoginForm onLogin={(role) => {
               localStorage.setItem("role", role);
               window.location.href = role === 'ADMIN' ? '/admin' : '/';
-          }} onSwitchToRegister={() => {window.location.href ='/register'}} />} />
+          }} onSwitchToRegister={() => {window.location.href ='/register'}} 
+          onForgotPassword={() => {window.location.href ='/forgot-password'}}
+          />} />
           <Route path="/register" element={<RegisterForm onSwitchToLogin={() => {window.location.href ='/login'}} />} />
           <Route path="/forgot-password" element={<ForgotPasswordForm onBack={()=>{window.location.href ='/login'}} />} />
 
