@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast"; // Corrected hook path
 import { fetchWithAuth } from "@/lib/api";
 
 type SeatType = 'premium' | 'regular' | 'economy' | 'basic';
@@ -141,12 +141,31 @@ export const TheaterSeatPricingPage = () => {
   const handleSave = async () => {
     if (!theater) return;
 
+    const prices = {
+      premium: parseFloat(seatPricing.premium),
+      regular: parseFloat(seatPricing.regular),
+      economy: parseFloat(seatPricing.economy),
+      basic: parseFloat(seatPricing.basic),
+    };
+
+    // Validate that all prices are numbers greater than zero
+    for (const [seatType, price] of Object.entries(prices)) {
+      if (isNaN(price) || price <= 0) {
+        toast({
+          title: "Invalid Price",
+          description: `The ${seatType} seat price must be a number greater than zero.`,
+          variant: "destructive",
+        });
+        return; // Stop the function if any price is invalid
+      }
+    }
+
     const payload = {
       ...theater,
-      premiumSeat: { ...theater.premiumSeat, totalPrice: parseFloat(seatPricing.premium) },
-      regularSeat: { ...theater.regularSeat, totalPrice: parseFloat(seatPricing.regular) },
-      economySeat: { ...theater.economySeat, totalPrice: parseFloat(seatPricing.economy) },
-      basicSeat: { ...theater.basicSeat, totalPrice: parseFloat(seatPricing.basic) }
+      premiumSeat: { ...theater.premiumSeat, totalPrice: prices.premium },
+      regularSeat: { ...theater.regularSeat, totalPrice: prices.regular },
+      economySeat: { ...theater.economySeat, totalPrice: prices.economy },
+      basicSeat: { ...theater.basicSeat, totalPrice: prices.basic }
     };
 
     try {
@@ -271,6 +290,8 @@ export const TheaterSeatPricingPage = () => {
                     <div className="w-4 h-4 bg-purple-500 rounded"></div>
                     <Input
                       type="number"
+                      min="0.01" // Basic browser-level validation
+                      step="any"
                       value={seatPricing.premium}
                       onChange={(e) => handlePriceChange('premium', e.target.value)}
                       className="flex-1"
@@ -287,6 +308,8 @@ export const TheaterSeatPricingPage = () => {
                     <div className="w-4 h-4 bg-blue-500 rounded"></div>
                     <Input
                       type="number"
+                      min="0.01"
+                      step="any"
                       value={seatPricing.regular}
                       onChange={(e) => handlePriceChange('regular', e.target.value)}
                       className="flex-1"
@@ -303,6 +326,8 @@ export const TheaterSeatPricingPage = () => {
                     <div className="w-4 h-4 bg-yellow-500 rounded"></div>
                     <Input
                       type="number"
+                      min="0.01"
+                      step="any"
                       value={seatPricing.economy}
                       onChange={(e) => handlePriceChange('economy', e.target.value)}
                       className="flex-1"
@@ -319,6 +344,8 @@ export const TheaterSeatPricingPage = () => {
                     <div className="w-4 h-4 bg-green-500 rounded"></div>
                     <Input
                       type="number"
+                      min="0.01"
+                      step="any"
                       value={seatPricing.basic}
                       onChange={(e) => handlePriceChange('basic', e.target.value)}
                       className="flex-1"
