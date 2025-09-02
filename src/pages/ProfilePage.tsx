@@ -238,16 +238,7 @@ export const ProfilePage = () => {
                               ))}
                             </div>
                           </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">
-                              Food & Beverage
-                            </p>
-                            <div className="mt-1">
-                              <span className="text-sm text-muted-foreground">
-                                No food items
-                              </span>
-                            </div>
-                          </div>
+                          
                         </div>
 
                         <div className="mt-4 pt-4 border-t border-border/50">

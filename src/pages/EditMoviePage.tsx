@@ -27,8 +27,13 @@ export const EditMoviePage = () => {
         status: "",
         cast: "",
         trailerUrl: "",
-        description: ""
+        description: "",
+        moviePosterUrl: "",
     });
+
+    // New state for handling the photo upload
+    const [posterFile, setPosterFile] = useState<File | null>(null);
+    const [posterPreview, setPosterPreview] = useState<string | null>(null);
 
     const [genreOptions, setGenreOptions] = useState<any[]>([]);
     const [templateData, setTemplateData] = useState<any>({
@@ -68,6 +73,7 @@ export const EditMoviePage = () => {
                             genre: movie.data.genres.map((g: any) => g.name),
                             cast: movie.data.movieCast,
                         });
+                        setPosterPreview(movie.data.moviePosterUrl);
                     } else {
                         console.error("Failed to fetch movie data");
                     }
@@ -80,12 +86,53 @@ export const EditMoviePage = () => {
         fetchMovieAndRelatedData();
     }, [id]);
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setPosterFile(file);
+            setPosterPreview(URL.createObjectURL(file));
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        let newPosterUrl = movieData.moviePosterUrl;
+        if (posterFile) {
+            const formData = new FormData();
+            formData.append("file", posterFile);
+
+            try {
+                const mediaResponse = await fetchWithAuth("/media", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                if (mediaResponse.ok) {
+                    const mediaData = await mediaResponse.json();
+                    newPosterUrl = mediaData.data.url;
+                } else {
+                    toast({
+                        title: "Error",
+                        description: "Failed to upload movie poster.",
+                        variant: "destructive",
+                    });
+                    return;
+                }
+            } catch (error) {
+                toast({
+                    title: "Error",
+                    description: "An error occurred while uploading the poster.",
+                    variant: "destructive",
+                });
+                return;
+            }
+        }
+
         const moviePayload = {
             ...movieData,
             movieCast: movieData.cast,
+            moviePosterUrl: newPosterUrl,
             genreIds: movieData.genre.map(genreName => {
                 const selectedGenre = genreOptions.find(g => g.name === genreName);
                 return selectedGenre ? selectedGenre.id : null;
@@ -281,9 +328,19 @@ export const EditMoviePage = () => {
                             <div className="space-y-4">
                                 <Label className="text-foreground">Movie Poster</Label>
                                 <div className="border-2 border-dashed border-border/50 rounded-lg p-8 text-center hover:border-border transition-colors">
-                                    <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                                    <p className="text-muted-foreground mb-2">Drop your poster here, or browse</p>
-                                    <p className="text-sm text-muted-foreground">Supports: JPG, PNG (Max 10MB)</p>
+                                    <Input type="file" onChange={handleFileChange} className="hidden" id="poster-upload" />
+                                    <label htmlFor="poster-upload" className="cursor-pointer block">
+                                        <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                                        <p className="text-muted-foreground mb-2">Drop your poster here, or browse</p>
+                                        <p className="text-sm text-muted-foreground">Supports: JPG, PNG (Max 10MB)</p>
+                                    </label>
+                                    {posterPreview && (
+                                        <img
+                                            src={posterPreview}
+                                            alt="Poster Preview"
+                                            className="mt-4 mx-auto h-32 w-auto object-contain rounded"
+                                        />
+                                    )}
                                 </div>
                             </div>
 
