@@ -50,6 +50,8 @@ export const Header = ({ onLogout, onLoginClick, onRegisterClick, isAuthenticate
   const navItems = [
     { id: "home", label: "HOME", path: "/" },
     { id: "discover", label: "DISCOVER", path: "/discover" },
+    { id: "about", label: "ABOUT", path: "/about" },
+    { id: "services", label: "SERVICES", path: "/services" },
     { id: "profile", label: "PROFILE", path: "/profile", requiresAuth: true },
     { id: "food", label: "FOOD", path: "/food", requiresAuth: true },
     ...(isAuthenticated && userRole === 'ADMIN' ? [{ id: "admin", label: "ADMIN", path: "/admin" }] : [])

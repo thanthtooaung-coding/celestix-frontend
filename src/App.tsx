@@ -41,6 +41,9 @@ import { AddComboPage } from "./pages/AddComboPage";
 import { EditComboPage } from "./pages/EditComboPage";
 import { BookingRefundsTable } from "./components/admin/BookingRefundsTable";
 import { EditMovieGenrePage } from "./pages/EditMovieGenrePage";
+import AboutPage from "./pages/AboutPage";
+import ServicePage from "./pages/ServicePage";
+import ChatbotPage from "./pages/ChatbotPage";
 
 const queryClient = new QueryClient();
 
@@ -95,6 +98,9 @@ const App = () => (
           <Route element={<UserLayout />}>
             <Route index path="/" element={<HomePage />} />
             <Route path="/discover" element={<DiscoverPage onPageChange={() => {}} isAuthenticated={isAuthenticated()} />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/services" element={<ServicePage />} />
+              <Route path="/chatbot" element={<ChatbotPage />} />
             <Route path="/coming-soon" element={<ComingSoonPage onPageChange={() => {}} isAuthenticated={isAuthenticated()} />} />
             <Route path="/movies/:id" element={<MovieDetailsPage movieId={null} onPageChange={() => {}} />} />
             <Route path="/booking/:id" element={<ProtectedRoute><BookingPage /></ProtectedRoute>} />
