@@ -552,24 +552,7 @@ export const TheatersTable = () => {
             </div>
           </div>
 
-          <div className="min-w-[150px]">
-            <label className="text-sm font-medium text-foreground mb-2 block">
-              Status
-            </label>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="All Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="Active">Active</SelectItem>
-                <SelectItem value="Maintenance">Maintenance</SelectItem>
-                <SelectItem value="Inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="min-w-[200px]">
+          <div className="min-w-[350px]">
             <label className="text-sm font-medium text-foreground mb-2 block">
               Location
             </label>
@@ -600,7 +583,6 @@ export const TheatersTable = () => {
               <TableHead className="text-foreground">Configuration</TableHead>
               <TableHead className="text-foreground">Seat Pricing</TableHead>
               <TableHead className="text-foreground">Capacity</TableHead>
-              <TableHead className="text-foreground">Status</TableHead>
               <TableHead className="text-foreground">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -624,19 +606,6 @@ export const TheatersTable = () => {
                 </TableCell>
                 <TableCell className="text-muted-foreground">
                   {theater.capacity}
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      theater.status === "Active"
-                        ? "default"
-                        : theater.status === "Maintenance"
-                        ? "secondary"
-                        : "destructive"
-                    }
-                  >
-                    {theater.status}
-                  </Badge>
                 </TableCell>
                 <TableCell>
                   <div className="flex space-x-2">
