@@ -247,7 +247,7 @@ export const ProfilePage = () => {
                               Total Amount
                             </span>
                             <span className="text-lg font-semibold text-accent">
-                              ${booking.totalAmount}
+                              {booking.totalAmount} Ks
                             </span>
                           </div>
                         </div>
