@@ -23,6 +23,7 @@ export const ProfilePage = () => {
   const [completedBookings, setCompletedBookings] = useState<any[]>([]);
   const [user, setUser] = useState({ name: "", email: "", profileUrl: "" });
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const [foodOrders, setFoodOrders] = useState<any[]>([]);
   const [bookingToCancel, setBookingToCancel] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -50,8 +51,20 @@ export const ProfilePage = () => {
         console.error("Failed to fetch bookings", error);
       }
     };
+    const fetchFoodOrders = async () => {
+      try {
+        const response = await fetchWithAuth("/food-orders/me");
+        if (response.ok) {
+          const data = await response.json();
+          setFoodOrders(data.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch food orders", error);
+      }
+    };
     fetchUser();
     fetchBookings();
+    fetchFoodOrders()
   }, []);
 
   const handleCancelBooking = (bookingId: string) => {
@@ -145,7 +158,7 @@ export const ProfilePage = () => {
             <h1 className="text-3xl font-bold text-white mb-8">My Profile</h1>
 
             <Tabs defaultValue="bookings" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 bg-card/50 border-border/50">
+              <TabsList className="grid w-full grid-cols-4 bg-card/50 border-border/50">
                 <TabsTrigger
                   value="bookings"
                   className="text-white data-[state=active]:bg-primary"
@@ -157,6 +170,9 @@ export const ProfilePage = () => {
                   className="text-white data-[state=active]:bg-primary"
                 >
                   History
+                </TabsTrigger>
+                <TabsTrigger value="food_orders" className="text-white data-[state=active]:bg-primary">
+                  Food Orders
                 </TabsTrigger>
                 <TabsTrigger
                   value="profile"
@@ -314,6 +330,58 @@ export const ProfilePage = () => {
                       </div>
                     </Card>
                   ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="food_orders" className="mt-6">
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold text-white mb-4">
+                    My Food & Beverage Orders
+                  </h2>
+                  {foodOrders.length > 0 ? (
+                    foodOrders.map((order) => (
+                      <Card key={order.id} className="bg-card/50 border-border/50 p-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <h3 className="text-lg font-semibold text-white">
+                              Order #{order.id}
+                            </h3>
+                            <div className="flex items-center gap-2 text-muted-foreground mt-2">
+                              <Calendar className="w-4 h-4" />
+                              <span>
+                                {new Date(order.orderDate).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                          <Badge className={order.paymentStatus === 'SUCCESS' ? 'bg-green-600' : 'bg-red-600'}>
+                            {order.paymentStatus}
+                          </Badge>
+                        </div>
+
+                        <div className="space-y-2">
+                          {order.items.map((item, index) => (
+                            <div key={index} className="flex justify-between items-center text-sm">
+                              <span className="text-white">{item.quantity}x {item.itemName}</span>
+                              <span className="text-muted-foreground">{(item.price * item.quantity).toFixed(2)} Ks</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="mt-4 pt-4 border-t border-border/50">
+                          <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">
+                              Total Amount
+                            </span>
+                            <span className="text-lg font-semibold text-accent">
+                              {order.totalPrice.toFixed(2)} Ks
+                            </span>
+                          </div>
+                        </div>
+                      </Card>
+                    ))
+                  ) : (
+                    <p className="text-muted-foreground">You have no past food orders.</p>
+                  )}
                 </div>
               </TabsContent>
 
