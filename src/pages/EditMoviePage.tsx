@@ -201,7 +201,7 @@ export const EditMoviePage = () => {
                                         id="releaseDate"
                                         type="date"
                                         value={movieData.releaseDate}
-                                        min={new Date().toISOString().split("T")[0]}
+                                        min={new Date().toLocaleDateString('en-CA')}
                                         onChange={(e) => handleInputChange("releaseDate", e.target.value)}
                                         className="bg-secondary/50 border-border/50 text-foreground"
                                     />

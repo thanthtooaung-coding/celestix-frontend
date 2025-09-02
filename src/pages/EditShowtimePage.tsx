@@ -233,7 +233,7 @@ export const EditShowtimePage = () => {
                     id="date"
                     type="date"
                     value={showtimeData.showtimeDate}
-                    min={new Date().toISOString().split("T")[0]}                    
+                    min={new Date().toLocaleDateString('en-CA')}
                     onChange={(e) =>
                       handleInputChange("showtimeDate", e.target.value)
                     }

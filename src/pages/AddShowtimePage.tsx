@@ -200,7 +200,7 @@ export const AddShowtimePage = () => {
                 <Input
                   type="date"
                   value={showtimeData.showtimeDate}
-                  min={new Date().toISOString().split("T")[0]} // Prevents past dates
+                  min={new Date().toLocaleDateString('en-CA')} // Prevents past dates
                   onChange={(e) =>
                     handleInputChange("showtimeDate", e.target.value)
                   }
