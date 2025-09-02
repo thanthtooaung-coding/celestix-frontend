@@ -63,6 +63,16 @@ export const EditFoodPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const numericPrice = parseFloat(foodData.price);
+    if (isNaN(numericPrice) || numericPrice <= 0) {
+      toast({
+        title: "Invalid Price",
+        description: "Price must be a number greater than zero.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     let imageUrl = foodData.photoUrl;
     if (foodImage) {
       const formData = new FormData();

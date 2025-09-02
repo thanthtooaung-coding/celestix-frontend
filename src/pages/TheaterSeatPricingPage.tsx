@@ -284,7 +284,7 @@ export const TheaterSeatPricingPage = () => {
               <div className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-foreground mb-2 block">
-                    Premium Seats
+                    Premium Seats Price
                   </label>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-purple-500 rounded"></div>
@@ -302,7 +302,7 @@ export const TheaterSeatPricingPage = () => {
 
                 <div>
                   <label className="text-sm font-medium text-foreground mb-2 block">
-                    Regular Seats
+                    Regular Seats Price
                   </label>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-blue-500 rounded"></div>
@@ -320,7 +320,7 @@ export const TheaterSeatPricingPage = () => {
 
                 <div>
                   <label className="text-sm font-medium text-foreground mb-2 block">
-                    Economy Seats
+                    Economy Seats Price
                   </label>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-yellow-500 rounded"></div>
@@ -338,7 +338,7 @@ export const TheaterSeatPricingPage = () => {
 
                 <div>
                   <label className="text-sm font-medium text-foreground mb-2 block">
-                    Basic Seats
+                    Basic Seats Price
                   </label>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-green-500 rounded"></div>
