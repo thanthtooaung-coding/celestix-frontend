@@ -203,7 +203,7 @@ export const ShowtimesTable = () => {
   const totalPages = Math.ceil(filteredShowtimes.length / itemsPerPage);
 
   const filterSections = [
-    { title: "By Status", stateKey: "status", options: ["Available", "Cancelled"] },
+    { title: "By Status", stateKey: "status", options: ["Available"] },
   ];
 
   return (
