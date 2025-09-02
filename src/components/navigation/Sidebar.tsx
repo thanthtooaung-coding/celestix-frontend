@@ -71,10 +71,11 @@ export const Sidebar = ({ onPageChange }: SidebarProps) => {
         {menuItems.map((item) => (
             <Link to={item.path} key={item.id}>
                 <Button
-                    variant={currentPage === item.path || (item.path === "/admin" && currentPage.startsWith("/admin/")) && currentPage !== "/admin/movies" && currentPage !== "/admin/movie-genres" && currentPage !== "/admin/food" && currentPage !== "/admin/food-category" && currentPage !== "/admin/showtimes" && currentPage !== "/admin/theaters" && currentPage !== "/admin/bookings" ? "default" : "ghost"}
+                    // FIX: Use startsWith to check for nested routes
+                    variant={currentPage.startsWith(item.path) && (item.path !== '/admin' || currentPage === '/admin') ? "default" : "ghost"}
                     className={cn(
                     "w-full justify-start space-x-3 h-12",
-                    currentPage === item.path || (item.path === "/admin" && currentPage.startsWith("/admin/")) && currentPage !== "/admin/movies" && currentPage !== "/admin/movie-genres" && currentPage !== "/admin/food" && currentPage !== "/admin/food-category" && currentPage !== "/admin/showtimes" && currentPage !== "/admin/theaters" && currentPage !== "/admin/bookings"
+                    currentPage.startsWith(item.path) && (item.path !== '/admin' || currentPage === '/admin')
                         ? "bg-gradient-accent text-background shadow-glow" 
                         : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
                     )}

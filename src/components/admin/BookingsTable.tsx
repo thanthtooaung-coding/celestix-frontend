@@ -336,7 +336,7 @@ export const BookingsTable = () => {
                             >
                               View Showtime Details
                             </DropdownMenuItem>
-                            <DropdownMenuSeparator />
+                            {/* <DropdownMenuSeparator />
                             <DropdownMenuItem
                               className="text-red-500 focus:text-red-500 focus:bg-red-500/10"
                               onSelect={() => {
@@ -347,7 +347,7 @@ export const BookingsTable = () => {
                               }}
                             >
                               Delete Booking
-                            </DropdownMenuItem>
+                            </DropdownMenuItem> */}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </td>
