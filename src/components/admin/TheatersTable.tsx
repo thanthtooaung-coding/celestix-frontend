@@ -50,10 +50,22 @@ const theaterSchema = z.object({
   regularSeatRows: z.string().min(1, "Regular seat rows are required"),
   economySeatRows: z.string().min(1, "Economy seat rows are required"),
   basicSeatRows: z.string().min(1, "Basic seat rows are required"),
-  premiumSeatPrice: z.string().min(1, "Premium price is required"),
-  regularSeatPrice: z.string().min(1, "Regular price is required"),
-  economySeatPrice: z.string().min(1, "Economy price is required"),
-  basicSeatPrice: z.string().min(1, "Basic price is required"),
+  premiumSeatPrice: z.string().min(1, "Premium price is required").refine(
+    (val) => parseFloat(val) > 0,
+    { message: "Price must be greater than zero" }
+  ),
+  regularSeatPrice: z.string().min(1, "Regular price is required").refine(
+    (val) => parseFloat(val) > 0,
+    { message: "Price must be greater than zero" }
+  ),
+  economySeatPrice: z.string().min(1, "Economy price is required").refine(
+    (val) => parseFloat(val) > 0,
+    { message: "Price must be greater than zero" }
+  ),
+  basicSeatPrice: z.string().min(1, "Basic price is required").refine(
+    (val) => parseFloat(val) > 0,
+    { message: "Price must be greater than zero" }
+  ),
 });
 
 type Theater = {
