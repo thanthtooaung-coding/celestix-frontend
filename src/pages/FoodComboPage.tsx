@@ -89,34 +89,37 @@ export const FoodComboPage = () => {
     }
   };
 
+  // REWRITTEN to handle prefixed IDs
   const getTotalPrice = () => {
-    const comboTotal = Object.entries(cart).reduce((total, [id, quantity]) => {
-      const combo = combos.find((c) => c.id.toString() === id);
-      return total + (combo ? combo.price * quantity : 0);
+    return Object.entries(cart).reduce((total, [prefixedId, quantity]) => {
+      const [type, id] = prefixedId.split('_');
+      
+      if (type === 'combo') {
+        const combo = combos.find((c) => c.id.toString() === id);
+        return total + (combo ? combo.price * quantity : 0);
+      } else if (type === 'food') {
+        const food = foods.find((f) => f.id.toString() === id);
+        return total + (food ? food.price * quantity : 0);
+      }
+      return total;
     }, 0);
-
-    const foodTotal = Object.entries(cart).reduce((total, [id, quantity]) => {
-      const food = foods.find((f) => f.id.toString() === id);
-      return total + (food ? food.price * quantity : 0);
-    }, 0);
-
-    return comboTotal + foodTotal;
   };
 
   const getTotalItems = () => {
     return Object.values(cart).reduce((total, quantity) => total + quantity, 0);
   };
 
+  // REWRITTEN to correctly build the payload from prefixed IDs
   const handleCheckout = async (cardDetails) => {
     setLoading(true);
 
-    // Build the new payload with item types
-    const items = Object.entries(cart).map(([id, quantity]) => {
-      const isFood = foods.some(f => f.id.toString() === id);
+    // Build the payload by parsing the prefixed IDs from the cart
+    const items = Object.entries(cart).map(([prefixedId, quantity]) => {
+      const [type, id] = prefixedId.split('_');
       return {
           id,
           quantity,
-          type: isFood ? 'food' : 'combo'
+          type // This will be either 'food' or 'combo'
       };
     });
 
@@ -126,7 +129,6 @@ export const FoodComboPage = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        // Send the new 'items' array instead of the 'cart' object
         body: JSON.stringify({ items, cardDetails }),
       });
 
@@ -222,8 +224,8 @@ export const FoodComboPage = () => {
               <div key={combo.id} className="relative">
                 <FoodComboCard
                   combo={combo}
-                  quantity={cart[combo.id] || 0}
-                  onQuantityChange={(id, qty) => handleQuantityChange(id.toString(), qty)}
+                  quantity={cart[`combo_${combo.id}`] || 0}
+                  onQuantityChange={(id, qty) => handleQuantityChange(`combo_${id.toString()}`, qty)}
                 />
               </div>
             ))}
@@ -234,7 +236,7 @@ export const FoodComboPage = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {foods.map((food) => (
                 <Card
-                  key={food.id}
+                  key={`food_${food.id}`}
                   className="bg-card/50 border-border/50 p-4 hover:border-primary/50 transition-colors relative flex flex-col"
                 >
                   <img
@@ -263,24 +265,24 @@ export const FoodComboPage = () => {
                         size="sm"
                         variant="outline"
                         className="h-8 w-8 p-0"
-                        onClick={() => handleQuantityChange(food.id.toString(), (cart[food.id] || 0) - 1)}
+                        onClick={() => handleQuantityChange(`food_${food.id}`, (cart[`food_${food.id}`] || 0) - 1)}
                       >
                         <Minus className="w-3 h-3" />
                       </Button>
-                      <span className="text-white min-w-[20px] text-center">{cart[food.id] || 0}</span>
+                      <span className="text-white min-w-[20px] text-center">{cart[`food_${food.id}`] || 0}</span>
                       <Button
                         size="sm"
                         variant="outline"
                         className="h-8 w-8 p-0"
-                        onClick={() => handleQuantityChange(food.id.toString(), (cart[food.id] || 0) + 1)}
+                        onClick={() => handleQuantityChange(`food_${food.id}`, (cart[`food_${food.id}`] || 0) + 1)}
                       >
                         <Plus className="w-3 h-3" />
                       </Button>
                     </div>
                   </div>
-                  {cart[food.id] > 0 && (
+                  {cart[`food_${food.id}`] > 0 && (
                     <Badge className="absolute -top-2 -right-2 bg-primary text-primary-foreground min-w-[24px] h-6 rounded-full flex items-center justify-center">
-                      {cart[food.id]}
+                      {cart[`food_${food.id}`]}
                     </Badge>
                   )}
                 </Card>
