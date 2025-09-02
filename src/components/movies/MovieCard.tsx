@@ -14,6 +14,7 @@ interface MovieCardProps {
     releaseDate: string;
     ageRating: string;
     trailerUrl: string;
+    status: string;
   };
   onBookTicket?: (movieId: string) => void;
   onViewDetails?: (movieId: string) => void;
@@ -28,6 +29,8 @@ export const MovieCard = ({ movie, onBookTicket, onViewDetails }: MovieCardProps
       window.open(`https://www.youtube.com/results?search_query=${searchQuery}`, '_blank');
     }
   };
+
+  const isComingSoon = movie.status === "Coming Soon";
 
   return (
     <Card className="group relative overflow-hidden bg-card/50 border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-movie">
@@ -62,8 +65,9 @@ export const MovieCard = ({ movie, onBookTicket, onViewDetails }: MovieCardProps
               className="w-full bg-gradient-accent hover:shadow-glow"
               size="sm"
               onClick={() => onBookTicket?.(movie.id)}
+              disabled={isComingSoon}
             >
-              Book Ticket
+              {isComingSoon ? "Coming Soon" : "Book Ticket"}
             </Button>
           </div>
         </div>

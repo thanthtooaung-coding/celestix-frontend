@@ -187,13 +187,99 @@ export const ProfilePage = () => {
                   <h2 className="text-xl font-semibold text-white mb-4">
                     Upcoming Bookings
                   </h2>
-                  {upcomingBookings.map((booking) => (
-                    <Card
-                      key={booking.id}
-                      className="bg-card/50 border-border/50 p-6"
-                    >
-                      <div className="flex justify-between items-start mb-4">
-                        <div>
+                  {upcomingBookings.length > 0 ? (
+                    upcomingBookings.map((booking) => (
+                      <Card
+                        key={booking.id}
+                        className="bg-card/50 border-border/50 p-6"
+                      >
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <h3 className="text-lg font-semibold text-white">
+                              {booking.movieTitle}
+                            </h3>
+                            <div className="flex items-center gap-4 text-muted-foreground mt-2">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="w-4 h-4" />
+                                <span>
+                                  {booking.showtimeDate} at {booking.showtimeTime}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <MapPin className="w-4 h-4" />
+                                <span>{booking.theaterName}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleCancelBooking(booking.id)}
+                            >
+                              <Trash2 className="w-4 h-4 mr-1" />
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm text-muted-foreground">Seats</p>
+                            <div className="flex gap-1 mt-1">
+                              {booking.seats.split(",").map((seat: any) => (
+                                <Badge
+                                  key={seat}
+                                  variant="outline"
+                                  className="text-white border-white/20"
+                                >
+                                  {seat}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">
+                              Food & Beverage
+                            </p>
+                            <div className="mt-1">
+                              <span className="text-sm text-muted-foreground">
+                                No food items
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 pt-4 border-t border-border/50">
+                          <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">
+                              Total Amount
+                            </span>
+                            <span className="text-lg font-semibold text-accent">
+                              ${booking.totalAmount}
+                            </span>
+                          </div>
+                        </div>
+                      </Card>
+                    ))
+                  ) : (
+                    <p className="text-muted-foreground">You have no upcoming bookings.</p>
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="history" className="mt-6">
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold text-white mb-4">
+                    Booking History
+                  </h2>
+                  {completedBookings.length > 0 ? (
+                    completedBookings.map((booking) => (
+                      <Card
+                        key={booking.id}
+                        className="bg-card/50 border-border/50 p-6 opacity-80"
+                      >
+                        <div className="mb-4">
                           <h3 className="text-lg font-semibold text-white">
                             {booking.movieTitle}
                           </h3>
@@ -210,22 +296,9 @@ export const ProfilePage = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleCancelBooking(booking.id)}
-                          >
-                            <Trash2 className="w-4 h-4 mr-1" />
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Seats</p>
-                          <div className="flex gap-1 mt-1">
+                        <div className="flex justify-between items-center">
+                          <div className="flex gap-1">
                             {booking.seats.split(",").map((seat: any) => (
                               <Badge
                                 key={seat}
@@ -236,100 +309,35 @@ export const ProfilePage = () => {
                               </Badge>
                             ))}
                           </div>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">
-                            Food & Beverage
-                          </p>
-                          <div className="mt-1">
-                            <span className="text-sm text-muted-foreground">
-                              No food items
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 pt-4 border-t border-border/50">
-                        <div className="flex justify-between items-center">
-                          <span className="text-muted-foreground">
-                            Total Amount
-                          </span>
-                          <span className="text-lg font-semibold text-accent">
-                            ${booking.totalAmount}
-                          </span>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="history" className="mt-6">
-                <div className="space-y-4">
-                  <h2 className="text-xl font-semibold text-white mb-4">
-                    Booking History
-                  </h2>
-                  {completedBookings.map((booking) => (
-                    <Card
-                      key={booking.id}
-                      className="bg-card/50 border-border/50 p-6 opacity-80"
-                    >
-                      <div className="mb-4">
-                        <h3 className="text-lg font-semibold text-white">
-                          {booking.movieTitle}
-                        </h3>
-                        <div className="flex items-center gap-4 text-muted-foreground mt-2">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            <span>
-                              {booking.showtimeDate} at {booking.showtimeTime}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <MapPin className="w-4 h-4" />
-                            <span>{booking.theaterName}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex justify-between items-center">
-                        <div className="flex gap-1">
-                          {booking.seats.split(",").map((seat: any) => (
-                            <Badge
-                              key={seat}
-                              variant="outline"
-                              className="text-white border-white/20"
-                            >
-                              {seat}
+                          {booking.status === "Confirmed" ? (
+                            <Badge className="bg-green-600 text-white">
+                              {booking.status}
                             </Badge>
-                          ))}
+                          ) : booking.status === "Cancelled" ? (
+                              <div className="flex items-center gap-2">
+                                  <Badge className="bg-red-600 text-white">
+                                      {booking.status}
+                                  </Badge>
+                                  {booking.refundStatus !== 'PENDING' && (
+                                      <Button
+                                      size="sm"
+                                      onClick={() => handleRequestRefund(booking.id)}
+                                      >
+                                      Request Refund
+                                      </Button>
+                                  )}
+                              </div>
+                          ) : (
+                            <Badge className="bg-gray-600 text-white">
+                              {booking.status}
+                            </Badge>
+                          )}
                         </div>
-                        {booking.status === "Confirmed" ? (
-                          <Badge className="bg-green-600 text-white">
-                            {booking.status}
-                          </Badge>
-                        ) : booking.status === "Cancelled" ? (
-                            <div className="flex items-center gap-2">
-                                <Badge className="bg-red-600 text-white">
-                                    {booking.status}
-                                </Badge>
-                                {booking.refundStatus !== 'PENDING' && (
-                                    <Button
-                                    size="sm"
-                                    onClick={() => handleRequestRefund(booking.id)}
-                                    >
-                                    Request Refund
-                                    </Button>
-                                )}
-                            </div>
-                        ) : (
-                          <Badge className="bg-gray-600 text-white">
-                            {booking.status}
-                          </Badge>
-                        )}
-                      </div>
-                    </Card>
-                  ))}
+                      </Card>
+                    ))
+                  ) : (
+                    <p className="text-muted-foreground">You have no past bookings.</p>
+                  )}
                 </div>
               </TabsContent>
 
