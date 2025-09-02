@@ -236,6 +236,7 @@ export const AddMoviePage = () => {
                                 <Input
                                     type="date"
                                     value={movieData.releaseDate}
+                                    min={new Date().toISOString().split("T")[0]}
                                     onChange={(e) => handleInputChange("releaseDate", e.target.value)}
                                     required
                                 />
