@@ -322,8 +322,9 @@ export const ProfilePage = () => {
                                       <Button
                                       size="sm"
                                       onClick={() => handleRequestRefund(booking.id)}
+                                      disabled={booking.isAlreadyRequestRefund || booking.refundStatus === 'PENDING'}
                                       >
-                                      Request Refund
+                                      {booking.isAlreadyRequestRefund || booking.refundStatus === 'PENDING' ? "Refund Requested" : "Request Refund"}
                                       </Button>
                                   )}
                               </div>
