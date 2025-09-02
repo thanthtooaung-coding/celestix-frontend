@@ -40,7 +40,7 @@ export const FoodTable = () => {
   const handleDeleteCombo = async (id) => {
     if (window.confirm("Are you sure you want to delete this combo?")) {
       try {
-        await fetchWithAuth(`/combos/${id}`, {
+        await fetchWithAuth(`/food/combos/${id}`, {
           method: "DELETE",
         });
         setCombos(combos.filter((combo) => combo.id !== id));
