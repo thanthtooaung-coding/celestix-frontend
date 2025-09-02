@@ -85,7 +85,8 @@ export const BookingPage = () => {
             dateArray.push({
                 date: newDate.getDate().toString().padStart(2, '0'),
                 day: newDate.toLocaleDateString('en-US', { weekday: 'short' }),
-                isoDate: newDate.toISOString().split('T')[0],
+                // isoDate: newDate.toISOString().split('T')[0],
+                isoDate: newDate.toLocaleDateString('en-CA')
             });
         }
         setDates(dateArray);
