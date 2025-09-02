@@ -40,6 +40,7 @@ import { AdminsTable } from "./components/admin/AdminsTable";
 import { AddComboPage } from "./pages/AddComboPage";
 import { EditComboPage } from "./pages/EditComboPage";
 import { BookingRefundsTable } from "./components/admin/BookingRefundsTable";
+import { EditMovieGenrePage } from "./pages/EditMovieGenrePage";
 
 const queryClient = new QueryClient();
 
@@ -118,6 +119,7 @@ const App = () => (
                 <Route path="movies/edit/:id" element={<EditMoviePage />} />
                 <Route path="movie-genres" element={<MovieGenreTable />} />
                 <Route path="movie-genres/add" element={<AddMovieGenrePage />} />
+                <Route path="movie-genres/edit/:id" element={<EditMovieGenrePage />} />
                 <Route path="food" element={<FoodTable />} />
                 <Route path="food/add" element={<AddFoodPage />} />
                 <Route path="food/edit/:id" element={<EditFoodPage />} />

@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Plus, Edit, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { fetchWithAuth } from "@/lib/api";
+import { toast } from "@/hooks/use-toast";
 
 export const MovieGenreTable = () => {
     const navigate = useNavigate();
@@ -12,7 +13,7 @@ export const MovieGenreTable = () => {
   const [genres, setGenres] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchGenres = () => {
     fetchWithAuth("/movie-genres")
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch genres");
@@ -25,11 +26,43 @@ export const MovieGenreTable = () => {
         console.error("Error fetching genres:", err);
       })
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchGenres();
   }, []);
 
   const filteredGenres = genres.filter((genre) =>
     genre.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleDelete = async (id: number) => {
+    try {
+        const response = await fetchWithAuth(`/movie-genres/${id}`, {
+            method: 'DELETE',
+        });
+        if (response.ok) {
+            toast({
+                title: "Success",
+                description: "Movie genre deleted successfully.",
+            });
+            fetchGenres();
+        } else {
+            const errorData = await response.json();
+            toast({
+                title: "Error",
+                description: errorData.message || "Failed to delete movie genre.",
+                variant: "destructive",
+            });
+        }
+    } catch (error) {
+        toast({
+            title: "Error",
+            description: "An error occurred while deleting the movie genre.",
+            variant: "destructive",
+        });
+    }
+  };
   
   return (
     <div className="space-y-6">
@@ -73,10 +106,10 @@ export const MovieGenreTable = () => {
                   <td className="p-4 text-muted-foreground">{genre.description}</td>
                   <td className="p-4">
                     <div className="flex items-center space-x-2">
-                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
+                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => navigate(`/admin/movie-genres/edit/${genre.id}`)}>
                         <Edit className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive">
+                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => handleDelete(genre.id)}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
